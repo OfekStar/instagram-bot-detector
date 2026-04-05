@@ -1,7 +1,21 @@
 # Data files — contain real usernames, don't push publicly
 *.csv
 
+# Credentials
+.env
+
+# Dependencies
+node_modules/
+frontend/node_modules/
+backend/node_modules/
+
+# Build output
+frontend/dist/
+backend/dist/
+
 # Python
 __pycache__/
 *.pyc
-.env
+
+# OS
+.DS_Store

@@ -2,16 +2,29 @@
 set -euo pipefail
 
 # Instagram Followers Fetcher (uses mobile API)
-# Usage: ./get_followers.sh <sessionid> <target_username>
+# Usage: ./get_followers.sh <target_username> [sessionid]
+# If sessionid is not passed, it is read from .env
 
-if [[ $# -lt 2 ]]; then
-    echo "Usage: $0 <sessionid> <target_username>"
-    echo "Example: $0 abc123def456 ofek.yifrach"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [[ -f "$SCRIPT_DIR/.env" ]]; then
+    source "$SCRIPT_DIR/.env"
+fi
+
+if [[ $# -lt 1 ]]; then
+    echo "Usage: $0 <target_username> [sessionid]"
+    echo "Example: $0 ofek.yifrach"
     exit 1
 fi
 
-SESSION_ID="$1"
-TARGET_USER="$2"
+TARGET_USER="$1"
+if [[ $# -ge 2 ]]; then
+    SESSION_ID="$2"
+fi
+
+if [[ -z "${SESSION_ID:-}" ]]; then
+    echo "Error: No session ID. Pass it as an argument or set SESSION_ID in .env"
+    exit 1
+fi
 OUTPUT_FILE="followers_${TARGET_USER}.csv"
 DELAY=2
 
