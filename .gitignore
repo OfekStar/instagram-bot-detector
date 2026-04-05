@@ -1,0 +1,7 @@
+# Data files — contain real usernames, don't push publicly
+*.csv
+
+# Python
+__pycache__/
+*.pyc
+.env
