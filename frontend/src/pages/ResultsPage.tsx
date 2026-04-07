@@ -1,8 +1,14 @@
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useSearchParams, useNavigate } from "react-router-dom";
 
 type RiskLevel = "high" | "medium" | "low" | "real";
 type FilterType = "all" | RiskLevel;
+
+interface Reason {
+  text: string;
+  severity: "high" | "medium" | "low";
+}
 
 interface Follower {
   id: string;
@@ -10,7 +16,7 @@ interface Follower {
   displayName: string;
   botScore: number;
   isKnownBot: boolean;
-  reasons: string[];
+  reasons: Reason[];
 }
 
 function getRiskLevel(score: number): RiskLevel {
@@ -27,7 +33,12 @@ const MOCK_FOLLOWERS: Follower[] = [
     displayName: "Follow4Follow",
     botScore: 97,
     isKnownBot: true,
-    reasons: ["Known bot account", "Spam keyword in username", "0 posts", "Follows 8,400 · 12 followers"],
+    reasons: [
+      { text: "Known bot account", severity: "high" },
+      { text: "Spam keyword in username", severity: "high" },
+      { text: "0 posts", severity: "medium" },
+      { text: "Follows 8,400 · 12 followers", severity: "medium" },
+    ],
   },
   {
     id: "2",
@@ -35,7 +46,11 @@ const MOCK_FOLLOWERS: Follower[] = [
     displayName: "Free Likes ✨",
     botScore: 94,
     isKnownBot: true,
-    reasons: ["Known bot account", "Spam keyword in username", "No profile picture"],
+    reasons: [
+      { text: "Known bot account", severity: "high" },
+      { text: "Spam keyword in username", severity: "high" },
+      { text: "No profile picture", severity: "medium" },
+    ],
   },
   {
     id: "3",
@@ -43,7 +58,11 @@ const MOCK_FOLLOWERS: Follower[] = [
     displayName: "IG Growth",
     botScore: 91,
     isKnownBot: false,
-    reasons: ["Spam keyword in username", "0 posts", "Follows 12,000 · 3 followers"],
+    reasons: [
+      { text: "Spam keyword in username", severity: "high" },
+      { text: "0 posts", severity: "medium" },
+      { text: "Follows 12,000 · 3 followers", severity: "medium" },
+    ],
   },
   {
     id: "4",
@@ -51,7 +70,11 @@ const MOCK_FOLLOWERS: Follower[] = [
     displayName: "Promo Boost",
     botScore: 88,
     isKnownBot: true,
-    reasons: ["Known bot account", "Promo keyword in username", "No bio"],
+    reasons: [
+      { text: "Known bot account", severity: "high" },
+      { text: "Promo keyword in username", severity: "high" },
+      { text: "No bio", severity: "low" },
+    ],
   },
   {
     id: "5",
@@ -59,7 +82,12 @@ const MOCK_FOLLOWERS: Follower[] = [
     displayName: "",
     botScore: 85,
     isKnownBot: false,
-    reasons: ["Spam keyword in username", "No display name", "No profile picture", "Account < 30 days old"],
+    reasons: [
+      { text: "Spam keyword in username", severity: "high" },
+      { text: "No profile picture", severity: "medium" },
+      { text: "Account < 30 days old", severity: "medium" },
+      { text: "No display name", severity: "low" },
+    ],
   },
   {
     id: "6",
@@ -67,7 +95,11 @@ const MOCK_FOLLOWERS: Follower[] = [
     displayName: "Auto Liker",
     botScore: 82,
     isKnownBot: true,
-    reasons: ["Known bot account", "Bot keyword in username", "0 posts"],
+    reasons: [
+      { text: "Known bot account", severity: "high" },
+      { text: "Bot keyword in username", severity: "high" },
+      { text: "0 posts", severity: "medium" },
+    ],
   },
   {
     id: "7",
@@ -75,7 +107,11 @@ const MOCK_FOLLOWERS: Follower[] = [
     displayName: "Brand Deals 💰",
     botScore: 79,
     isKnownBot: false,
-    reasons: ["Promo keyword in username", "Follows 5,200 · 18 followers", "Suspicious bio link"],
+    reasons: [
+      { text: "Promo keyword in username", severity: "high" },
+      { text: "Suspicious bio link", severity: "medium" },
+      { text: "Follows 5,200 · 18 followers", severity: "medium" },
+    ],
   },
   {
     id: "8",
@@ -83,7 +119,12 @@ const MOCK_FOLLOWERS: Follower[] = [
     displayName: "",
     botScore: 76,
     isKnownBot: false,
-    reasons: ["No display name", "No profile picture", "0 posts", "Account < 90 days old"],
+    reasons: [
+      { text: "No profile picture", severity: "medium" },
+      { text: "0 posts", severity: "medium" },
+      { text: "Account < 90 days old", severity: "medium" },
+      { text: "No display name", severity: "low" },
+    ],
   },
   {
     id: "9",
@@ -91,7 +132,11 @@ const MOCK_FOLLOWERS: Follower[] = [
     displayName: "Influx Media",
     botScore: 68,
     isKnownBot: false,
-    reasons: ["Follows 3,100 · 44 followers", "No posts", "Generic bio"],
+    reasons: [
+      { text: "Follows 3,100 · 44 followers", severity: "medium" },
+      { text: "No posts", severity: "medium" },
+      { text: "Generic bio", severity: "low" },
+    ],
   },
   {
     id: "10",
@@ -99,7 +144,10 @@ const MOCK_FOLLOWERS: Follower[] = [
     displayName: "Social Boost",
     botScore: 63,
     isKnownBot: true,
-    reasons: ["Known bot account", "Boost keyword in username"],
+    reasons: [
+      { text: "Known bot account", severity: "high" },
+      { text: "Boost keyword in username", severity: "high" },
+    ],
   },
   {
     id: "11",
@@ -107,7 +155,10 @@ const MOCK_FOLLOWERS: Follower[] = [
     displayName: "Trendy Clips",
     botScore: 57,
     isKnownBot: false,
-    reasons: ["High post frequency", "Follows 2,800 · 91 followers"],
+    reasons: [
+      { text: "High post frequency", severity: "medium" },
+      { text: "Follows 2,800 · 91 followers", severity: "medium" },
+    ],
   },
   {
     id: "12",
@@ -115,7 +166,10 @@ const MOCK_FOLLOWERS: Follower[] = [
     displayName: "Viral Page HQ",
     botScore: 51,
     isKnownBot: false,
-    reasons: ["Follows 1,900 · 120 followers", "No bio"],
+    reasons: [
+      { text: "Follows 1,900 · 120 followers", severity: "medium" },
+      { text: "No bio", severity: "low" },
+    ],
   },
   {
     id: "13",
@@ -123,7 +177,10 @@ const MOCK_FOLLOWERS: Follower[] = [
     displayName: "Mia Thompson",
     botScore: 44,
     isKnownBot: false,
-    reasons: ["Follows 900 · 210 followers", "Account < 90 days old"],
+    reasons: [
+      { text: "Follows 900 · 210 followers", severity: "medium" },
+      { text: "Account < 90 days old", severity: "low" },
+    ],
   },
   {
     id: "14",
@@ -131,7 +188,11 @@ const MOCK_FOLLOWERS: Follower[] = [
     displayName: "",
     botScore: 38,
     isKnownBot: false,
-    reasons: ["No display name", "Numeric suffix in username", "Account < 90 days old"],
+    reasons: [
+      { text: "Numeric suffix in username", severity: "medium" },
+      { text: "Account < 90 days old", severity: "low" },
+      { text: "No display name", severity: "low" },
+    ],
   },
   {
     id: "15",
@@ -139,7 +200,9 @@ const MOCK_FOLLOWERS: Follower[] = [
     displayName: "Photography Hub",
     botScore: 29,
     isKnownBot: false,
-    reasons: ["Follows 600 · 480 followers"],
+    reasons: [
+      { text: "Follows 600 · 480 followers", severity: "low" },
+    ],
   },
   {
     id: "16",
@@ -147,7 +210,9 @@ const MOCK_FOLLOWERS: Follower[] = [
     displayName: "Carlos Dev",
     botScore: 21,
     isKnownBot: false,
-    reasons: ["Low engagement rate"],
+    reasons: [
+      { text: "Low engagement rate", severity: "low" },
+    ],
   },
   {
     id: "17",
@@ -155,7 +220,9 @@ const MOCK_FOLLOWERS: Follower[] = [
     displayName: "Lina K.",
     botScore: 14,
     isKnownBot: false,
-    reasons: ["Few posts"],
+    reasons: [
+      { text: "Few posts", severity: "low" },
+    ],
   },
   {
     id: "18",
@@ -344,34 +411,81 @@ function StatCard({
   value,
   label,
   color,
+  active,
+  onClick,
 }: {
   value: number;
   label: string;
   color: string;
+  active: boolean;
+  onClick: () => void;
 }) {
   const animated = useCountUp(value, 900);
   return (
-    <div className="flex flex-col items-center gap-1 flex-1">
+    <button
+      onClick={onClick}
+      className={`flex flex-col items-center gap-1 flex-1 py-1 rounded-sm transition-colors cursor-pointer ${
+        active ? "bg-zinc-800/60" : "hover:bg-zinc-800/30"
+      }`}
+    >
       <span className={`text-2xl font-bold tabular-nums ${color}`}>
         {animated}
       </span>
-      <span className="text-zinc-600 text-[10px] uppercase tracking-wide text-center">
+      <span
+        className={`text-[10px] uppercase tracking-wide text-center transition-colors ${
+          active ? "text-zinc-300" : "text-zinc-600"
+        }`}
+      >
         {label}
       </span>
-    </div>
+      {active && (
+        <div className={`h-0.5 w-4 rounded-sm ${color.replace("text-", "bg-")}`} />
+      )}
+    </button>
   );
 }
 
-function Tooltip({ reasons }: { reasons: string[] }) {
-  return (
-    <div className="absolute right-0 top-full mt-1.5 z-10 w-56 bg-zinc-900 border border-zinc-700 rounded-sm shadow-xl p-3 flex flex-col gap-1.5">
-      {reasons.map((r, i) => (
-        <div key={i} className="flex items-start gap-2">
-          <span className="text-zinc-500 mt-0.5 shrink-0">·</span>
-          <span className="text-zinc-300 text-xs leading-snug">{r}</span>
-        </div>
-      ))}
-    </div>
+const SEVERITY_STYLES: Record<
+  Reason["severity"],
+  { dot: string; text: string }
+> = {
+  high: { dot: "bg-red-400", text: "text-red-300" },
+  medium: { dot: "bg-yellow-400", text: "text-yellow-200" },
+  low: { dot: "bg-zinc-500", text: "text-zinc-300" },
+};
+
+function Tooltip({
+  reasons,
+  x,
+  y,
+}: {
+  reasons: Reason[];
+  x: number;
+  y: number;
+}) {
+  return createPortal(
+    <div
+      className="fixed z-50 w-64 bg-zinc-900 border border-zinc-600 rounded-sm shadow-2xl overflow-hidden pointer-events-none"
+      style={{ left: x + 16, top: y + 12 }}
+    >
+      <div className="px-3 py-2 border-b border-zinc-700 bg-zinc-800">
+        <span className="text-white text-[11px] font-semibold uppercase tracking-wider">
+          Why this score?
+        </span>
+      </div>
+      <div className="p-3 flex flex-col gap-2">
+        {reasons.map((r, i) => {
+          const s = SEVERITY_STYLES[r.severity];
+          return (
+            <div key={i} className="flex items-start gap-2.5">
+              <div className={`w-1.5 h-1.5 rounded-full ${s.dot} mt-1.5 shrink-0`} />
+              <span className={`text-xs leading-snug ${s.text}`}>{r.text}</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>,
+    document.body
   );
 }
 
@@ -386,6 +500,7 @@ function FollowerRow({
   const styles = RISK_STYLES[risk];
   const animatedScore = useCountUp(follower.botScore, 600 + index * 30);
   const [showTooltip, setShowTooltip] = useState(false);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [visible, setVisible] = useState(false);
   const tooltipRef = useRef<HTMLDivElement>(null);
 
@@ -394,22 +509,19 @@ function FollowerRow({
     return () => clearTimeout(timer);
   }, [index]);
 
-  useEffect(() => {
-    if (!showTooltip) return;
-    function handleClick(e: MouseEvent) {
-      if (tooltipRef.current && !tooltipRef.current.contains(e.target as Node)) {
-        setShowTooltip(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [showTooltip]);
+  function handleMouseMove(e: React.MouseEvent) {
+    setMousePos({ x: e.clientX, y: e.clientY });
+  }
 
   return (
     <div
+      ref={tooltipRef}
       className={`flex items-center justify-between px-4 py-3 rounded-sm border-l-4 ${styles.row} ${styles.border} transition-all duration-300 ${
         visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
-      }`}
+      } ${follower.reasons.length > 0 ? "cursor-default" : ""}`}
+      onMouseEnter={() => follower.reasons.length > 0 && setShowTooltip(true)}
+      onMouseLeave={() => setShowTooltip(false)}
+      onMouseMove={handleMouseMove}
     >
       {/* Left — identity */}
       <div className="flex flex-col gap-0.5 min-w-0">
@@ -430,7 +542,7 @@ function FollowerRow({
         ) : null}
       </div>
 
-      {/* Right — score + tooltip trigger */}
+      {/* Right — score */}
       <div className="flex items-center gap-3 shrink-0 ml-4">
         <div className="flex flex-col items-end">
           <span className={`text-lg font-bold tabular-nums ${styles.score}`}>
@@ -442,18 +554,15 @@ function FollowerRow({
         </div>
 
         {follower.reasons.length > 0 && (
-          <div className="relative" ref={tooltipRef}>
-            <button
-              onClick={() => setShowTooltip((v) => !v)}
-              className="w-5 h-5 rounded-sm border border-zinc-700 text-zinc-500 hover:text-zinc-300 hover:border-zinc-500 transition-colors flex items-center justify-center text-xs cursor-pointer"
-              aria-label="Why this score?"
-            >
-              ?
-            </button>
-            {showTooltip && <Tooltip reasons={follower.reasons} />}
+          <div className="w-5 h-5 rounded-sm border border-zinc-700 text-zinc-500 flex items-center justify-center text-xs select-none">
+            ?
           </div>
         )}
       </div>
+
+      {showTooltip && (
+        <Tooltip reasons={follower.reasons} x={mousePos.x} y={mousePos.y} />
+      )}
     </div>
   );
 }
@@ -506,55 +615,39 @@ export default function ResultsPage() {
           </h1>
         </div>
 
-        {/* Stat bar */}
-        <div className="border border-zinc-800 rounded-sm bg-zinc-900/30 px-6 py-5 flex flex-col gap-4">
-          <div className="flex divide-x divide-zinc-800">
-            <StatCard value={counts.all} label="Scanned" color="text-white" />
-            <StatCard value={counts.high} label="High Risk" color="text-red-400" />
-            <StatCard value={counts.medium} label="Medium" color="text-yellow-400" />
-            <StatCard value={counts.low} label="Low Risk" color="text-green-400" />
-            <StatCard value={counts.real} label="Real" color="text-zinc-400" />
+        {/* Stat bar — also acts as filter */}
+        <div className="border border-zinc-800 rounded-sm bg-zinc-900/30 flex flex-col gap-4 overflow-hidden">
+          <div className="flex divide-x divide-zinc-800 pt-4 px-2">
+            <StatCard value={counts.all} label="All" color="text-white" active={filter === "all"} onClick={() => setFilter("all")} />
+            <StatCard value={counts.high} label="High Risk" color="text-red-400" active={filter === "high"} onClick={() => setFilter("high")} />
+            <StatCard value={counts.medium} label="Medium" color="text-yellow-400" active={filter === "medium"} onClick={() => setFilter("medium")} />
+            <StatCard value={counts.low} label="Low Risk" color="text-green-400" active={filter === "low"} onClick={() => setFilter("low")} />
+            <StatCard value={counts.real} label="Real" color="text-zinc-400" active={filter === "real"} onClick={() => setFilter("real")} />
           </div>
 
-          {/* Bot percentage bar */}
-          <div className="flex flex-col gap-1.5">
-            <div className="flex justify-between items-center">
-              <span className="text-zinc-500 text-[10px] uppercase tracking-wide">
-                Suspected bots
-              </span>
-              <span className="text-zinc-400 text-[10px] tabular-nums">
-                {botPercent}%
-              </span>
+          {/* Breakdown bar */}
+          <div className="flex flex-col gap-1.5 px-5 pb-4">
+            <div className="w-full h-2 flex rounded-sm overflow-hidden gap-px">
+              {counts.high > 0 && (
+                <div className="bg-red-500 h-full transition-all duration-1000" style={{ flex: counts.high }} />
+              )}
+              {counts.medium > 0 && (
+                <div className="bg-yellow-500 h-full transition-all duration-1000" style={{ flex: counts.medium }} />
+              )}
+              {counts.low > 0 && (
+                <div className="bg-green-600 h-full transition-all duration-1000" style={{ flex: counts.low }} />
+              )}
+              {counts.real > 0 && (
+                <div className="bg-zinc-700 h-full transition-all duration-1000" style={{ flex: counts.real }} />
+              )}
             </div>
-            <div className="w-full h-1.5 bg-zinc-800 rounded-sm overflow-hidden">
-              <div
-                className="h-full ig-gradient rounded-sm transition-all duration-1000 ease-out"
-                style={{ width: `${botPercent}%` }}
-              />
+            <div className="flex gap-3">
+              <span className="text-red-400 text-[10px]">{counts.high} high</span>
+              <span className="text-yellow-400 text-[10px]">{counts.medium} medium</span>
+              <span className="text-green-400 text-[10px]">{counts.low} low</span>
+              <span className="text-zinc-500 text-[10px]">{counts.real} real</span>
             </div>
           </div>
-        </div>
-
-        {/* Filters */}
-        <div className="flex gap-2 flex-wrap">
-          {FILTER_LABELS.map(({ key, label }) => (
-            <button
-              key={key}
-              onClick={() => setFilter(key)}
-              className={`px-3 py-1.5 rounded-sm text-xs font-medium transition-colors cursor-pointer border ${
-                filter === key
-                  ? "bg-white text-black border-white"
-                  : "bg-transparent text-zinc-400 border-zinc-700 hover:border-zinc-500 hover:text-zinc-300"
-              }`}
-            >
-              {label}
-              <span
-                className={`ml-1.5 ${filter === key ? "text-zinc-500" : "text-zinc-600"}`}
-              >
-                {counts[key]}
-              </span>
-            </button>
-          ))}
         </div>
 
         {/* Account List */}
