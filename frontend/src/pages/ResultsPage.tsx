@@ -351,6 +351,13 @@ function StatChip({ label, value, flagged }: { label: string; value: string; fla
 
 // ─── Follower row ─────────────────────────────────────────────────────────────
 
+const SCORE_GLOW: Record<RiskLevel, string> = {
+  high:   "0 0 18px #ef444480",
+  medium: "0 0 18px #eab30880",
+  low:    "0 0 18px #22c55e80",
+  real:   "none",
+};
+
 function FollowerRow({ follower, index }: { follower: Follower; index: number }) {
   const risk = getRiskLevel(follower.botScore);
   const styles = RISK_STYLES[risk];
@@ -365,13 +372,19 @@ function FollowerRow({ follower, index }: { follower: Follower; index: number })
     return () => clearTimeout(t);
   }, [index]);
 
+  useEffect(() => {
+    const hide = () => { setShowTooltip(false); setMousePos(null); };
+    window.addEventListener("scroll", hide, { passive: true });
+    return () => window.removeEventListener("scroll", hide);
+  }, []);
+
   const hasInfo = follower.reasons.length > 0 || follower.flaggedFields.length > 0;
 
   return (
     <div className={`rounded-sm border-l-4 ${styles.border} transition-all duration-300 ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"}`}>
       {/* Main row */}
       <div
-        className={`flex items-center justify-between px-4 py-3 ${styles.row} ${hasInfo ? "cursor-pointer" : ""}`}
+        className={`flex items-center justify-between px-4 py-3 ${styles.row} ${hasInfo ? "cursor-pointer" : ""} hover:brightness-105 transition-all duration-150`}
         onClick={() => hasInfo && setExpanded((v) => !v)}
         onMouseEnter={() => follower.reasons.length > 0 && setShowTooltip(true)}
         onMouseLeave={() => { setShowTooltip(false); setMousePos(null); }}
@@ -379,7 +392,7 @@ function FollowerRow({ follower, index }: { follower: Follower; index: number })
       >
         <div className="flex flex-col gap-0.5 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-white text-sm font-medium truncate">@{follower.username}</span>
+            <span className="font-display text-white text-sm font-bold truncate">@{follower.username}</span>
             {follower.isKnownBot && (
               <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-sm bg-red-900/60 text-red-300 shrink-0">Known Bot</span>
             )}
@@ -389,8 +402,8 @@ function FollowerRow({ follower, index }: { follower: Follower; index: number })
 
         <div className="flex items-center gap-3 shrink-0 ml-4">
           <div className="flex flex-col items-end">
-            <span className={`text-lg font-bold tabular-nums ${styles.score}`}>{animatedScore}</span>
-            <span className="text-zinc-600 text-[10px] uppercase tracking-wide">bot score</span>
+            <span className={`text-xl font-black tabular-nums ${styles.score}`} style={{ textShadow: SCORE_GLOW[risk] }}>{animatedScore}</span>
+            <span className="text-zinc-600 text-[10px] uppercase tracking-widest">score</span>
           </div>
           {hasInfo && (
             <span className={`text-zinc-500 text-xs transition-transform duration-200 ${expanded ? "rotate-180" : ""}`}>▾</span>
@@ -448,11 +461,19 @@ export default function ResultsPage() {
   const profile = searchParams.get("profile") ?? "";
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterType>("all");
+  const [barMounted, setBarMounted] = useState(false);
 
   useEffect(() => {
     const t = setTimeout(() => setLoading(false), 4000);
     return () => clearTimeout(t);
   }, []);
+
+  useEffect(() => {
+    if (!loading) {
+      const t = setTimeout(() => setBarMounted(true), 150);
+      return () => clearTimeout(t);
+    }
+  }, [loading]);
 
   if (loading) return <LoadingView profile={profile} />;
 
@@ -484,7 +505,7 @@ export default function ResultsPage() {
           </div>
           <div className="flex flex-col gap-2 min-w-0">
             <div className="flex flex-col gap-0.5">
-              <span className="text-white font-bold text-xl tracking-tight">@{profile}</span>
+              <span className="font-display text-white font-bold text-xl tracking-tight">@{profile}</span>
               <a href={`https://instagram.com/${profile}`} target="_blank" rel="noopener noreferrer" className="text-zinc-500 hover:text-zinc-300 text-xs transition-colors w-fit">
                 instagram.com/{profile} ↗
               </a>
@@ -502,12 +523,12 @@ export default function ResultsPage() {
         {/* Grade — hero element */}
         <div className="flex items-end gap-6">
           <div className="flex flex-col gap-1">
-            <span className={`text-8xl font-black leading-none tabular-nums ${grade.color}`}>{grade.grade}</span>
-            <span className="text-zinc-500 text-xs uppercase tracking-widest">{grade.label}</span>
+            <span className="font-display chrome-text text-8xl font-black leading-none">{grade.grade}</span>
+            <span className={`text-xs uppercase tracking-widest font-semibold ${grade.color}`}>{grade.label}</span>
           </div>
           <div className="flex-1 pb-2 flex flex-col gap-3">
-            {/* Breakdown bar */}
-            <div className="w-full h-2 flex rounded-sm overflow-hidden gap-px">
+            {/* Breakdown bar — animates in */}
+            <div className="w-full h-2 flex rounded-sm overflow-hidden gap-px origin-left transition-transform duration-700 ease-out" style={{ transform: barMounted ? "scaleX(1)" : "scaleX(0)" }}>
               {counts.high > 0   && <div className="bg-red-500 h-full"    style={{ flex: counts.high }} />}
               {counts.medium > 0 && <div className="bg-yellow-500 h-full" style={{ flex: counts.medium }} />}
               {counts.low > 0    && <div className="bg-green-600 h-full"  style={{ flex: counts.low }} />}

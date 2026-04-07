@@ -10,12 +10,27 @@ body {
     margin: 0;
     background-color: #0a0a0a;
     color: white;
-    font-family:
-        system-ui,
-        -apple-system,
-        sans-serif;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+}
+
+.font-display {
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+}
+
+@keyframes chrome-sweep {
+    0%   { background-position: -200% center; }
+    100% { background-position: 200% center; }
+}
+
+.chrome-text {
+    background: linear-gradient(90deg, #777 0%, #bbb 20%, #fff 40%, #ddd 55%, #999 70%, #777 100%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: chrome-sweep 4s linear infinite;
 }
 
 #root {
