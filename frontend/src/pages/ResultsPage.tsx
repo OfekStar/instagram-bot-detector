@@ -370,12 +370,28 @@ const SCORE_GLOW: Record<RiskLevel, string> = {
   real:   "none",
 };
 
+const LAMP_GLOW: Record<RiskLevel, string> = {
+  high:   "239, 68, 68",
+  medium: "234, 179, 8",
+  low:    "34, 197, 94",
+  real:   "161, 161, 170",
+};
+
+function getAccountGrade(score: number): { letter: string } {
+  if (score < 10) return { letter: "A" };
+  if (score < 40) return { letter: "B" };
+  if (score < 60) return { letter: "C" };
+  if (score < 75) return { letter: "D" };
+  return           { letter: "F" };
+}
+
 function FollowerRow({ follower, index }: { follower: Follower; index: number }) {
   const risk = getRiskLevel(follower.botScore);
   const styles = RISK_STYLES[risk];
-  const animatedScore = useCountUp(follower.botScore, 600 + index * 30);
+  const accountGrade = getAccountGrade(follower.botScore);
   const [showTooltip, setShowTooltip] = useState(false);
   const [mousePos, setMousePos] = useState<{ x: number; y: number } | null>(null);
+  const [hoverPos, setHoverPos] = useState<{ x: number; y: number } | null>(null);
   const [visible, setVisible] = useState(false);
   const [expanded, setExpanded] = useState(false);
 
@@ -397,12 +413,26 @@ function FollowerRow({ follower, index }: { follower: Follower; index: number })
     <div className={`rounded-sm border-l-4 ${styles.border} transition-all duration-300 ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"}`}>
       {/* Main row */}
       <div
-        className={`flex items-center justify-between px-4 py-3 ${styles.row} ${hasInfo ? "cursor-pointer" : ""} hover:brightness-105 transition-all duration-150`}
+        className={`relative overflow-hidden flex items-center justify-between px-4 py-3 ${styles.row} ${hasInfo ? "cursor-pointer" : ""} transition-all duration-150`}
         onClick={() => hasInfo && setExpanded((v) => !v)}
         onMouseEnter={() => reasons.length > 0 && setShowTooltip(true)}
-        onMouseLeave={() => { setShowTooltip(false); setMousePos(null); }}
-        onMouseMove={(e) => setMousePos({ x: e.clientX, y: e.clientY })}
+        onMouseLeave={() => { setShowTooltip(false); setMousePos(null); setHoverPos(null); }}
+        onMouseMove={(e) => {
+          setMousePos({ x: e.clientX, y: e.clientY });
+          const rect = e.currentTarget.getBoundingClientRect();
+          setHoverPos({
+            x: ((e.clientX - rect.left) / rect.width) * 100,
+            y: ((e.clientY - rect.top) / rect.height) * 100,
+          });
+        }}
       >
+        {/* Lamp glow overlay */}
+        {hoverPos && (
+          <div className="absolute inset-0 pointer-events-none"
+            style={{ background: `radial-gradient(circle at ${hoverPos.x}% ${hoverPos.y}%, rgba(${LAMP_GLOW[risk]}, 0.22) 0%, rgba(${LAMP_GLOW[risk]}, 0.06) 50%, transparent 70%)` }}
+          />
+        )}
+
         <div className="flex flex-col gap-0.5 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-display text-white text-sm font-bold truncate">@{follower.username}</span>
@@ -415,8 +445,8 @@ function FollowerRow({ follower, index }: { follower: Follower; index: number })
 
         <div className="flex items-center gap-3 shrink-0 ml-4">
           <div className="flex flex-col items-end">
-            <span className={`text-xl font-black tabular-nums ${styles.score}`} style={{ textShadow: SCORE_GLOW[risk] }}>{animatedScore}</span>
-            <span className="text-zinc-600 text-[10px] uppercase tracking-widest">score</span>
+            <span className={`font-display text-2xl font-black leading-none ${styles.score}`} style={{ textShadow: SCORE_GLOW[risk] }}>{accountGrade.letter}</span>
+            <span className="text-zinc-600 text-[10px] uppercase tracking-widest">grade</span>
           </div>
           {hasInfo && (
             <span className={`text-zinc-500 text-xs transition-transform duration-200 ${expanded ? "rotate-180" : ""}`}>▾</span>
@@ -461,32 +491,51 @@ function getBotGrade(percent: number): { grade: string; color: string; label: st
 
 function GradeLetter({ letter }: { letter: string }) {
   const glow = GRADE_META[letter]?.glow ?? "#888";
-  const id = `metal-${letter}`;
+  const gradId = `metal-${letter}`;
+  const specId = `spec-${letter}`;
+  const glowId = `halo-${letter}`;
   return (
-    <svg width="110" height="110" viewBox="0 0 110 110" aria-label={`Grade ${letter}`}>
+    <svg width="150" height="150" viewBox="0 0 150 150" aria-label={`Grade ${letter}`}>
       <defs>
-        <linearGradient id={id} x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%"   stopColor="#2e2e2e" />
-          <stop offset="18%"  stopColor="#b0b0b0" />
-          <stop offset="35%"  stopColor="#ffffff" />
-          <stop offset="50%"  stopColor="#888888" />
-          <stop offset="68%"  stopColor="#444444" />
-          <stop offset="83%"  stopColor="#d4d4d4" />
-          <stop offset="100%" stopColor="#1a1a1a" />
+        <linearGradient id={gradId} x1="0%" y1="0%" x2="10%" y2="100%">
+          <stop offset="0%"   stopColor="#1a1a1a" />
+          <stop offset="15%"  stopColor="#999999" />
+          <stop offset="30%"  stopColor="#f0f0f0" />
+          <stop offset="45%"  stopColor="#ffffff" />
+          <stop offset="58%"  stopColor="#707070" />
+          <stop offset="73%"  stopColor="#383838" />
+          <stop offset="87%"  stopColor="#c8c8c8" />
+          <stop offset="100%" stopColor="#111111" />
         </linearGradient>
-        <filter id={`glow-${letter}`} x="-30%" y="-30%" width="160%" height="160%">
-          <feGaussianBlur stdDeviation="10" result="blur" />
+
+        {/* Colored halo blur */}
+        <filter id={glowId} x="-40%" y="-40%" width="180%" height="180%">
+          <feGaussianBlur stdDeviation="12" />
+        </filter>
+
+        {/* Specular 3D bevel */}
+        <filter id={specId} x="-5%" y="-5%" width="110%" height="110%">
+          <feGaussianBlur in="SourceAlpha" stdDeviation="2.5" result="bump" />
+          <feSpecularLighting in="bump" surfaceScale="6" specularConstant="1.8"
+            specularExponent="28" lightingColor="#ffffff" result="specular">
+            <fePointLight x="45" y="-35" z="110" />
+          </feSpecularLighting>
+          <feComposite in="specular" in2="SourceAlpha" operator="in" result="clipped" />
+          <feBlend in="SourceGraphic" in2="clipped" mode="screen" result="blended" />
+          <feComposite in="blended" in2="SourceAlpha" operator="in" />
         </filter>
       </defs>
+
       {/* Colored glow halo */}
-      <text x="55" y="92" textAnchor="middle" fontSize="108"
+      <text x="75" y="126" textAnchor="middle" fontSize="148"
         fontFamily="'Bebas Neue', sans-serif"
-        fill={glow} filter={`url(#glow-${letter})`} opacity="0.55"
+        fill={glow} filter={`url(#${glowId})`} opacity="0.6"
       >{letter}</text>
-      {/* Metallic letter */}
-      <text x="55" y="92" textAnchor="middle" fontSize="108"
+
+      {/* Metallic + specular letter */}
+      <text x="75" y="126" textAnchor="middle" fontSize="148"
         fontFamily="'Bebas Neue', sans-serif"
-        fill={`url(#${id})`}
+        fill={`url(#${gradId})`} filter={`url(#${specId})`}
       >{letter}</text>
     </svg>
   );
