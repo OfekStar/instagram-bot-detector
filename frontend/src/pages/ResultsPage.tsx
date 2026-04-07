@@ -501,15 +501,35 @@ function getBotGrade(percent: number): { grade: string; color: string; label: st
   return { grade: "F", ...GRADE_META["F"] };
 }
 
+const GRADE_CSS: Record<string, { color: string; shadow: string }> = {
+  A: { color: "#FFD700", shadow: "#22c55e" },
+  B: { color: "#60a5fa", shadow: "#3b82f6" },
+  C: { color: "#fbbf24", shadow: "#d97706" },
+  D: { color: "#fb923c", shadow: "#ea580c" },
+  F: { color: "#ef4444", shadow: "#7f1d1d" },
+};
+
 function GradeLetter({ letter }: { letter: string }) {
+  const { color, shadow } = GRADE_CSS[letter] ?? GRADE_CSS["F"];
   return (
-    <div className="relative w-44 h-44 shrink-0">
-      <img
-        src={GRADE_IMAGES[letter]}
-        alt={`Grade ${letter}`}
-        className="w-full h-full object-contain"
-        style={{ mixBlendMode: "screen" }}
-      />
+    <div className="relative w-44 h-44 shrink-0 flex items-center justify-center">
+      <span
+        className="select-none leading-none"
+        style={{
+          fontFamily: "'Press Start 2P', monospace",
+          fontSize: "6rem",
+          color,
+          textShadow: `
+            3px 3px 0 #000,
+            -1px -1px 0 #000,
+            4px 4px 0 ${shadow},
+            6px 6px 0 ${shadow}88,
+            0 0 30px ${shadow}66
+          `,
+        }}
+      >
+        {letter}
+      </span>
       {/* Arcade sparkle — big, glow pulses, slow spin */}
       <span className="absolute top-1 right-1 text-4xl leading-none pointer-events-none select-none"
         style={{ color: "#ffffff", animation: "sparkle 7s linear infinite" }}
