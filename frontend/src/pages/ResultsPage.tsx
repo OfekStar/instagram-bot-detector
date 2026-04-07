@@ -392,6 +392,73 @@ function LoadingView({ profile }: { profile: string }) {
   );
 }
 
+interface MockProfile {
+  followers: number;
+  following: number;
+  posts: number;
+}
+
+const MOCK_PROFILE: MockProfile = {
+  followers: 12400,
+  following: 891,
+  posts: 234,
+};
+
+function fmt(n: number): string {
+  if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, "") + "K";
+  return String(n);
+}
+
+function getBotGrade(percent: number): {
+  grade: string;
+  color: string;
+  border: string;
+  bg: string;
+  label: string;
+} {
+  if (percent < 10) return { grade: "A", color: "text-green-400", border: "border-green-800", bg: "bg-green-950/30", label: "Very clean" };
+  if (percent < 25) return { grade: "B", color: "text-lime-400", border: "border-lime-800", bg: "bg-lime-950/30", label: "Mostly real" };
+  if (percent < 40) return { grade: "C", color: "text-yellow-400", border: "border-yellow-800", bg: "bg-yellow-950/30", label: "Mixed" };
+  if (percent < 60) return { grade: "D", color: "text-orange-400", border: "border-orange-800", bg: "bg-orange-950/30", label: "Suspicious" };
+  return { grade: "F", color: "text-red-400", border: "border-red-800", bg: "bg-red-950/30", label: "Highly botted" };
+}
+
+function ProfileHeader({ profile }: { profile: string }) {
+  return (
+    <div className="border border-zinc-800 rounded-sm bg-zinc-900/30 p-5 flex items-center gap-5">
+      <div className="w-14 h-14 ig-gradient rounded-sm flex items-center justify-center shrink-0">
+        <span className="text-white font-bold text-xl uppercase">
+          {profile[0] ?? "?"}
+        </span>
+      </div>
+      <div className="flex flex-col gap-2 min-w-0">
+        <div className="flex items-center gap-3 flex-wrap">
+          <span className="text-white font-bold text-base">@{profile}</span>
+          <a
+            href={`https://instagram.com/${profile}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-zinc-500 hover:text-zinc-300 text-xs transition-colors"
+          >
+            instagram.com/{profile} ↗
+          </a>
+        </div>
+        <div className="flex gap-4">
+          <span className="text-zinc-400 text-xs">
+            <span className="text-white font-semibold">{fmt(MOCK_PROFILE.followers)}</span> followers
+          </span>
+          <span className="text-zinc-400 text-xs">
+            <span className="text-white font-semibold">{fmt(MOCK_PROFILE.following)}</span> following
+          </span>
+          <span className="text-zinc-400 text-xs">
+            <span className="text-white font-semibold">{MOCK_PROFILE.posts}</span> posts
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function useCountUp(target: number, duration = 800): number {
   const [value, setValue] = useState(0);
   useEffect(() => {
@@ -502,6 +569,7 @@ function FollowerRow({
   const [showTooltip, setShowTooltip] = useState(false);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [visible, setVisible] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const tooltipRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -513,55 +581,77 @@ function FollowerRow({
     setMousePos({ x: e.clientX, y: e.clientY });
   }
 
+  const hasReasons = follower.reasons.length > 0;
+
   return (
     <div
-      ref={tooltipRef}
-      className={`flex items-center justify-between px-4 py-3 rounded-sm border-l-4 ${styles.row} ${styles.border} transition-all duration-300 ${
+      className={`rounded-sm border-l-4 ${styles.border} transition-all duration-300 ${
         visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
-      } ${follower.reasons.length > 0 ? "cursor-default" : ""}`}
-      onMouseEnter={() => follower.reasons.length > 0 && setShowTooltip(true)}
-      onMouseLeave={() => setShowTooltip(false)}
-      onMouseMove={handleMouseMove}
+      }`}
     >
-      {/* Left — identity */}
-      <div className="flex flex-col gap-0.5 min-w-0">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-white text-sm font-medium truncate">
-            @{follower.username}
-          </span>
-          {follower.isKnownBot && (
-            <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-sm bg-red-900/60 text-red-300 shrink-0">
-              Known Bot
+      {/* Main row */}
+      <div
+        ref={tooltipRef}
+        className={`flex items-center justify-between px-4 py-3 ${styles.row} ${hasReasons ? "cursor-pointer" : ""}`}
+        onClick={() => hasReasons && setExpanded((v) => !v)}
+        onMouseEnter={() => hasReasons && !expanded && setShowTooltip(true)}
+        onMouseLeave={() => setShowTooltip(false)}
+        onMouseMove={handleMouseMove}
+      >
+        {/* Left — identity */}
+        <div className="flex flex-col gap-0.5 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-white text-sm font-medium truncate">
+              @{follower.username}
+            </span>
+            {follower.isKnownBot && (
+              <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-sm bg-red-900/60 text-red-300 shrink-0">
+                Known Bot
+              </span>
+            )}
+          </div>
+          {follower.displayName ? (
+            <span className="text-zinc-500 text-xs truncate">
+              {follower.displayName}
+            </span>
+          ) : null}
+        </div>
+
+        {/* Right — score + expand indicator */}
+        <div className="flex items-center gap-3 shrink-0 ml-4">
+          <div className="flex flex-col items-end">
+            <span className={`text-lg font-bold tabular-nums ${styles.score}`}>
+              {animatedScore}
+            </span>
+            <span className="text-zinc-600 text-[10px] uppercase tracking-wide">
+              bot score
+            </span>
+          </div>
+          {hasReasons && (
+            <span className={`text-zinc-500 text-xs transition-transform duration-200 ${expanded ? "rotate-180" : ""}`}>
+              ▾
             </span>
           )}
         </div>
-        {follower.displayName ? (
-          <span className="text-zinc-500 text-xs truncate">
-            {follower.displayName}
-          </span>
-        ) : null}
-      </div>
 
-      {/* Right — score */}
-      <div className="flex items-center gap-3 shrink-0 ml-4">
-        <div className="flex flex-col items-end">
-          <span className={`text-lg font-bold tabular-nums ${styles.score}`}>
-            {animatedScore}
-          </span>
-          <span className="text-zinc-600 text-[10px] uppercase tracking-wide">
-            bot score
-          </span>
-        </div>
-
-        {follower.reasons.length > 0 && (
-          <div className="w-5 h-5 rounded-sm border border-zinc-700 text-zinc-500 flex items-center justify-center text-xs select-none">
-            ?
-          </div>
+        {showTooltip && !expanded && (
+          <Tooltip reasons={follower.reasons} x={mousePos.x} y={mousePos.y} />
         )}
       </div>
 
-      {showTooltip && (
-        <Tooltip reasons={follower.reasons} x={mousePos.x} y={mousePos.y} />
+      {/* Expanded reasons */}
+      {expanded && hasReasons && (
+        <div className={`px-4 py-3 border-t border-zinc-800/60 ${styles.row} flex flex-col gap-2`}>
+          {follower.reasons.map((r, i) => {
+            const s = SEVERITY_STYLES[r.severity];
+            return (
+              <div key={i} className="flex items-start gap-2.5">
+                <div className={`w-1.5 h-1.5 rounded-full ${s.dot} mt-1.5 shrink-0`} />
+                <span className={`text-xs leading-snug ${s.text}`}>{r.text}</span>
+              </div>
+            );
+          })}
+        </div>
       )}
     </div>
   );
@@ -598,57 +688,85 @@ export default function ResultsPage() {
   };
 
   const botPercent = Math.round(((counts.high + counts.medium) / counts.all) * 100);
+  const grade = getBotGrade(botPercent);
+  const topBots = sorted.filter((f) => getRiskLevel(f.botScore) === "high").slice(0, 3);
 
   return (
     <div className="min-h-screen flex flex-col items-center px-4 py-10">
       <div className="w-full max-w-2xl flex flex-col gap-6">
-        {/* Header */}
-        <div className="flex flex-col gap-1">
-          <button
-            onClick={() => navigate("/")}
-            className="text-zinc-600 hover:text-zinc-400 text-xs transition-colors self-start mb-2 cursor-pointer"
-          >
-            ← Back
-          </button>
-          <h1 className="text-xl font-bold text-white tracking-tight">
-            Followers of <span className="ig-gradient-text">@{profile}</span>
-          </h1>
+        {/* Back */}
+        <button
+          onClick={() => navigate("/")}
+          className="text-zinc-600 hover:text-zinc-400 text-xs transition-colors self-start cursor-pointer"
+        >
+          ← Back
+        </button>
+
+        {/* Profile header */}
+        <ProfileHeader profile={profile} />
+
+        {/* Grade + stat bar */}
+        <div className="border border-zinc-800 rounded-sm bg-zinc-900/30 flex flex-col overflow-hidden">
+          <div className="flex divide-x divide-zinc-800">
+            {/* Grade */}
+            <div className={`flex flex-col items-center justify-center gap-0.5 px-6 py-5 ${grade.bg} border-r ${grade.border}`}>
+              <span className={`text-5xl font-black tabular-nums leading-none ${grade.color}`}>
+                {grade.grade}
+              </span>
+              <span className="text-zinc-500 text-[10px] uppercase tracking-wide">{grade.label}</span>
+            </div>
+
+            {/* Stats */}
+            <div className="flex-1 flex flex-col">
+              <div className="flex divide-x divide-zinc-800 pt-4 px-2">
+                <StatCard value={counts.all} label="All" color="text-white" active={filter === "all"} onClick={() => setFilter("all")} />
+                <StatCard value={counts.high} label="High Risk" color="text-red-400" active={filter === "high"} onClick={() => setFilter("high")} />
+                <StatCard value={counts.medium} label="Medium" color="text-yellow-400" active={filter === "medium"} onClick={() => setFilter("medium")} />
+                <StatCard value={counts.low} label="Low Risk" color="text-green-400" active={filter === "low"} onClick={() => setFilter("low")} />
+                <StatCard value={counts.real} label="Real" color="text-zinc-400" active={filter === "real"} onClick={() => setFilter("real")} />
+              </div>
+              {/* Breakdown bar */}
+              <div className="flex flex-col gap-1.5 px-4 pb-4 pt-3">
+                <div className="w-full h-2 flex rounded-sm overflow-hidden gap-px">
+                  {counts.high > 0 && <div className="bg-red-500 h-full" style={{ flex: counts.high }} />}
+                  {counts.medium > 0 && <div className="bg-yellow-500 h-full" style={{ flex: counts.medium }} />}
+                  {counts.low > 0 && <div className="bg-green-600 h-full" style={{ flex: counts.low }} />}
+                  {counts.real > 0 && <div className="bg-zinc-700 h-full" style={{ flex: counts.real }} />}
+                </div>
+                <div className="flex gap-3">
+                  <span className="text-red-400 text-[10px]">{counts.high} high</span>
+                  <span className="text-yellow-400 text-[10px]">{counts.medium} medium</span>
+                  <span className="text-green-400 text-[10px]">{counts.low} low</span>
+                  <span className="text-zinc-500 text-[10px]">{counts.real} real</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Stat bar — also acts as filter */}
-        <div className="border border-zinc-800 rounded-sm bg-zinc-900/30 flex flex-col gap-4 overflow-hidden">
-          <div className="flex divide-x divide-zinc-800 pt-4 px-2">
-            <StatCard value={counts.all} label="All" color="text-white" active={filter === "all"} onClick={() => setFilter("all")} />
-            <StatCard value={counts.high} label="High Risk" color="text-red-400" active={filter === "high"} onClick={() => setFilter("high")} />
-            <StatCard value={counts.medium} label="Medium" color="text-yellow-400" active={filter === "medium"} onClick={() => setFilter("medium")} />
-            <StatCard value={counts.low} label="Low Risk" color="text-green-400" active={filter === "low"} onClick={() => setFilter("low")} />
-            <StatCard value={counts.real} label="Real" color="text-zinc-400" active={filter === "real"} onClick={() => setFilter("real")} />
-          </div>
-
-          {/* Breakdown bar */}
-          <div className="flex flex-col gap-1.5 px-5 pb-4">
-            <div className="w-full h-2 flex rounded-sm overflow-hidden gap-px">
-              {counts.high > 0 && (
-                <div className="bg-red-500 h-full transition-all duration-1000" style={{ flex: counts.high }} />
-              )}
-              {counts.medium > 0 && (
-                <div className="bg-yellow-500 h-full transition-all duration-1000" style={{ flex: counts.medium }} />
-              )}
-              {counts.low > 0 && (
-                <div className="bg-green-600 h-full transition-all duration-1000" style={{ flex: counts.low }} />
-              )}
-              {counts.real > 0 && (
-                <div className="bg-zinc-700 h-full transition-all duration-1000" style={{ flex: counts.real }} />
-              )}
-            </div>
-            <div className="flex gap-3">
-              <span className="text-red-400 text-[10px]">{counts.high} high</span>
-              <span className="text-yellow-400 text-[10px]">{counts.medium} medium</span>
-              <span className="text-green-400 text-[10px]">{counts.low} low</span>
-              <span className="text-zinc-500 text-[10px]">{counts.real} real</span>
+        {/* Top 3 worst offenders */}
+        {topBots.length > 0 && (
+          <div className="flex flex-col gap-2">
+            <p className="text-zinc-500 text-[11px] uppercase tracking-wider">Top offenders</p>
+            <div className="flex flex-col gap-1">
+              {topBots.map((f, i) => (
+                <div key={f.id} className="flex items-center gap-3 px-4 py-2.5 border border-red-900/50 bg-red-950/20 rounded-sm">
+                  <span className="text-red-900 font-black text-sm w-4 tabular-nums">#{i + 1}</span>
+                  <div className="flex-1 min-w-0">
+                    <span className="text-white text-sm font-medium truncate">@{f.username}</span>
+                    {f.displayName ? <span className="text-zinc-500 text-xs ml-2">{f.displayName}</span> : null}
+                  </div>
+                  {f.isKnownBot && (
+                    <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-sm bg-red-900/60 text-red-300 shrink-0">
+                      Known Bot
+                    </span>
+                  )}
+                  <span className="text-red-400 font-bold tabular-nums text-sm shrink-0">{f.botScore}</span>
+                </div>
+              ))}
             </div>
           </div>
-        </div>
+        )}
 
         {/* Account List */}
         <div className="flex flex-col gap-1.5">
