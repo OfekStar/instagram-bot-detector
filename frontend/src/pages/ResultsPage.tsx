@@ -510,11 +510,10 @@ function GradeLetter({ letter }: { letter: string }) {
         className="w-full h-full object-contain"
         style={{ mixBlendMode: "screen" }}
       />
-      {/* Arcade sparkle sprite — top-right corner */}
-      <img src={sparkleImg} alt="" aria-hidden
-        className="absolute top-1 right-1 w-10 h-10 pointer-events-none select-none"
-        style={{ mixBlendMode: "screen", animation: "sparkle 2.5s ease-in-out infinite" }}
-      />
+      {/* Arcade sparkle — pure white, no background */}
+      <span className="absolute top-2 right-2 text-2xl leading-none pointer-events-none select-none"
+        style={{ color: "#ffffff", textShadow: "0 0 8px #fff, 0 0 20px #fff", animation: "sparkle 2.5s ease-in-out infinite" }}
+      >✦</span>
     </div>
   );
 }
