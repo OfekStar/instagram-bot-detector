@@ -430,12 +430,53 @@ function FollowerRow({ follower, index }: { follower: Follower; index: number })
 
 // ─── Grade ────────────────────────────────────────────────────────────────────
 
+const GRADE_META: Record<string, { color: string; glow: string; label: string }> = {
+  A: { color: "text-green-400",  glow: "#22c55e", label: "Very clean" },
+  B: { color: "text-lime-400",   glow: "#84cc16", label: "Mostly real" },
+  C: { color: "text-yellow-400", glow: "#eab308", label: "Mixed" },
+  D: { color: "text-orange-400", glow: "#f97316", label: "Suspicious" },
+  F: { color: "text-red-400",    glow: "#ef4444", label: "Highly botted" },
+};
+
 function getBotGrade(percent: number): { grade: string; color: string; label: string } {
-  if (percent < 10) return { grade: "A", color: "text-green-400", label: "Very clean" };
-  if (percent < 25) return { grade: "B", color: "text-lime-400", label: "Mostly real" };
-  if (percent < 40) return { grade: "C", color: "text-yellow-400", label: "Mixed" };
-  if (percent < 60) return { grade: "D", color: "text-orange-400", label: "Suspicious" };
-  return { grade: "F", color: "text-red-400", label: "Highly botted" };
+  if (percent < 10) return { grade: "A", ...GRADE_META["A"] };
+  if (percent < 25) return { grade: "B", ...GRADE_META["B"] };
+  if (percent < 40) return { grade: "C", ...GRADE_META["C"] };
+  if (percent < 60) return { grade: "D", ...GRADE_META["D"] };
+  return { grade: "F", ...GRADE_META["F"] };
+}
+
+function GradeLetter({ letter }: { letter: string }) {
+  const glow = GRADE_META[letter]?.glow ?? "#888";
+  const id = `metal-${letter}`;
+  return (
+    <svg width="110" height="110" viewBox="0 0 110 110" aria-label={`Grade ${letter}`}>
+      <defs>
+        <linearGradient id={id} x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%"   stopColor="#2e2e2e" />
+          <stop offset="18%"  stopColor="#b0b0b0" />
+          <stop offset="35%"  stopColor="#ffffff" />
+          <stop offset="50%"  stopColor="#888888" />
+          <stop offset="68%"  stopColor="#444444" />
+          <stop offset="83%"  stopColor="#d4d4d4" />
+          <stop offset="100%" stopColor="#1a1a1a" />
+        </linearGradient>
+        <filter id={`glow-${letter}`} x="-30%" y="-30%" width="160%" height="160%">
+          <feGaussianBlur stdDeviation="10" result="blur" />
+        </filter>
+      </defs>
+      {/* Colored glow halo */}
+      <text x="55" y="92" textAnchor="middle" fontSize="108"
+        fontFamily="'Bebas Neue', sans-serif"
+        fill={glow} filter={`url(#glow-${letter})`} opacity="0.55"
+      >{letter}</text>
+      {/* Metallic letter */}
+      <text x="55" y="92" textAnchor="middle" fontSize="108"
+        fontFamily="'Bebas Neue', sans-serif"
+        fill={`url(#${id})`}
+      >{letter}</text>
+    </svg>
+  );
 }
 
 // ─── Stat card (filter bar) ───────────────────────────────────────────────────
@@ -522,9 +563,9 @@ export default function ResultsPage() {
 
         {/* Grade — hero element */}
         <div className="flex items-end gap-6">
-          <div className="flex flex-col gap-1">
-            <span className="font-display chrome-text text-8xl font-black leading-none">{grade.grade}</span>
-            <span className={`text-xs uppercase tracking-widest font-semibold ${grade.color}`}>{grade.label}</span>
+          <div className="flex flex-col gap-0">
+            <GradeLetter letter={grade.grade} />
+            <span className={`text-xs uppercase tracking-widest font-semibold -mt-1 ${grade.color}`}>{grade.label}</span>
           </div>
           <div className="flex-1 pb-2 flex flex-col gap-3">
             {/* Breakdown bar — animates in */}
