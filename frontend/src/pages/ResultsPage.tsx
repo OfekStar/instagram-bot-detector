@@ -7,8 +7,6 @@ import gradeB from "../assets/grades/B.webp";
 import gradeC from "../assets/grades/C.webp";
 import gradeD from "../assets/grades/D.webp";
 import gradeF from "../assets/grades/F.webp";
-import sparkleImg from "../assets/grades/sparkle.webp";
-
 const GRADE_IMAGES: Record<string, string> = { A: gradeA, B: gradeB, C: gradeC, D: gradeD, F: gradeF };
 
 type RiskLevel = "high" | "medium" | "low" | "real";
@@ -501,47 +499,15 @@ function getBotGrade(percent: number): { grade: string; color: string; label: st
   return { grade: "F", ...GRADE_META["F"] };
 }
 
-const GRADE_STOPS: Record<string, { stops: [string,string,string,string]; shadow: string; dark: string }> = {
-  A: { stops: ["#fffde7","#FFD700","#ffe566","#b8860b"], shadow: "#16a34a", dark: "#052e16" },
-  B: { stops: ["#e0f2fe","#60a5fa","#93c5fd","#1e3a8a"], shadow: "#2563eb", dark: "#0c1a4b" },
-  C: { stops: ["#fefce8","#fbbf24","#fde68a","#78350f"], shadow: "#d97706", dark: "#3d1a00" },
-  D: { stops: ["#fff7ed","#fb923c","#fdba74","#7c2d12"], shadow: "#ea580c", dark: "#3d0f00" },
-  F: { stops: ["#fee2e2","#ef4444","#fca5a5","#450a0a"], shadow: "#dc2626", dark: "#1a0000" },
-};
-
 function GradeLetter({ letter }: { letter: string }) {
-  const { stops, shadow, dark } = GRADE_STOPS[letter] ?? GRADE_STOPS["F"];
-  const gid = `g-${letter}`;
-  const fid = `f-${letter}`;
   return (
-    <div className="relative w-44 h-44 shrink-0 flex items-center justify-center">
-      <svg width="176" height="176" viewBox="0 0 176 176" style={{ overflow: "visible" }}>
-        <defs>
-          <linearGradient id={gid} x1="0%" y1="0%" x2="15%" y2="100%">
-            <stop offset="0%"   stopColor={stops[0]} />
-            <stop offset="28%"  stopColor={stops[1]} />
-            <stop offset="55%"  stopColor={stops[2]} />
-            <stop offset="80%"  stopColor={stops[3]} />
-            <stop offset="100%" stopColor={stops[1]} />
-          </linearGradient>
-          <filter id={fid} x="-10%" y="-10%" width="120%" height="120%">
-            {/* Metal grain noise */}
-            <feTurbulence type="fractalNoise" baseFrequency="0.75 0.35" numOctaves="4" seed="2" result="noise"/>
-            <feColorMatrix type="saturate" values="0" in="noise" result="gray"/>
-            <feBlend in="SourceGraphic" in2="gray" mode="overlay" result="textured"/>
-            <feComposite in="textured" in2="SourceAlpha" operator="in" result="clipped"/>
-            {/* Specular pop */}
-            <feComposite in="clipped" in2="SourceAlpha" operator="over"/>
-          </filter>
-        </defs>
-        {/* Deep shadow stack */}
-        <text x="94" y="126" textAnchor="middle" fontFamily="'Press Start 2P',monospace" fontSize="82" fill={dark} opacity="0.9">  {letter}</text>
-        <text x="92" y="124" textAnchor="middle" fontFamily="'Press Start 2P',monospace" fontSize="82" fill={shadow} opacity="0.7">{letter}</text>
-        <text x="90" y="122" textAnchor="middle" fontFamily="'Press Start 2P',monospace" fontSize="82" fill={shadow} opacity="0.4">{letter}</text>
-        {/* Main letter — gradient + texture filter */}
-        <text x="88" y="120" textAnchor="middle" fontFamily="'Press Start 2P',monospace" fontSize="82"
-          fill={`url(#${gid})`} filter={`url(#${fid})`}>{letter}</text>
-      </svg>
+    <div className="relative w-44 h-44 shrink-0">
+      <img
+        src={GRADE_IMAGES[letter]}
+        alt={`Grade ${letter}`}
+        className="w-full h-full object-contain"
+        style={{ mixBlendMode: "screen" }}
+      />
       {/* Arcade sparkle — big, glow pulses, slow spin */}
       <span className="absolute top-1 right-1 text-4xl leading-none pointer-events-none select-none"
         style={{ color: "#ffffff", animation: "sparkle 7s linear infinite" }}
