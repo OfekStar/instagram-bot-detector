@@ -326,8 +326,11 @@ const TOOLTIP_STYLES: Record<RiskLevel, { border: string; header: string }> = {
   real:   { border: "border-zinc-700",   header: "bg-zinc-800" },
 };
 
+const SEVERITY_ORDER: Record<Reason["severity"], number> = { high: 0, medium: 1, low: 2 };
+
 function Tooltip({ reasons, x, y, risk }: { reasons: Reason[]; x: number; y: number; risk: RiskLevel }) {
   if (reasons.length === 0) return null;
+  const sorted = [...reasons].sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity]);
   const ts = TOOLTIP_STYLES[risk];
   return createPortal(
     <div className={`fixed z-50 w-64 bg-zinc-900 border ${ts.border} rounded-sm shadow-2xl overflow-hidden pointer-events-none`} style={{ left: x + 16, top: y + 12 }}>
@@ -335,7 +338,7 @@ function Tooltip({ reasons, x, y, risk }: { reasons: Reason[]; x: number; y: num
         <span className="text-white text-[11px] font-semibold uppercase tracking-wider">Why this score?</span>
       </div>
       <div className="p-3 flex flex-col gap-2">
-        {reasons.map((r, i) => {
+        {sorted.map((r, i) => {
           const s = SEVERITY_STYLES[r.severity];
           return (
             <div key={i} className="flex items-start gap-2.5">
