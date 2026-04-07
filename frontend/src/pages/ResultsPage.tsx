@@ -307,11 +307,19 @@ function useCountUp(target: number, duration = 800): number {
 
 // ─── Tooltip ─────────────────────────────────────────────────────────────────
 
-function Tooltip({ reasons, x, y }: { reasons: Reason[]; x: number; y: number }) {
+const TOOLTIP_STYLES: Record<RiskLevel, { border: string; header: string }> = {
+  high:   { border: "border-red-800",    header: "bg-red-950/80" },
+  medium: { border: "border-yellow-800", header: "bg-yellow-950/80" },
+  low:    { border: "border-green-800",  header: "bg-green-950/80" },
+  real:   { border: "border-zinc-700",   header: "bg-zinc-800" },
+};
+
+function Tooltip({ reasons, x, y, risk }: { reasons: Reason[]; x: number; y: number; risk: RiskLevel }) {
   if (reasons.length === 0) return null;
+  const ts = TOOLTIP_STYLES[risk];
   return createPortal(
-    <div className="fixed z-50 w-64 bg-zinc-900 border border-zinc-600 rounded-sm shadow-2xl overflow-hidden pointer-events-none" style={{ left: x + 16, top: y + 12 }}>
-      <div className="px-3 py-2 border-b border-zinc-700 bg-zinc-800">
+    <div className={`fixed z-50 w-64 bg-zinc-900 border ${ts.border} rounded-sm shadow-2xl overflow-hidden pointer-events-none`} style={{ left: x + 16, top: y + 12 }}>
+      <div className={`px-3 py-2 border-b ${ts.border} ${ts.header}`}>
         <span className="text-white text-[11px] font-semibold uppercase tracking-wider">Why this score?</span>
       </div>
       <div className="p-3 flex flex-col gap-2">
@@ -348,7 +356,7 @@ function FollowerRow({ follower, index }: { follower: Follower; index: number })
   const styles = RISK_STYLES[risk];
   const animatedScore = useCountUp(follower.botScore, 600 + index * 30);
   const [showTooltip, setShowTooltip] = useState(false);
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [mousePos, setMousePos] = useState<{ x: number; y: number } | null>(null);
   const [visible, setVisible] = useState(false);
   const [expanded, setExpanded] = useState(false);
 
@@ -365,8 +373,8 @@ function FollowerRow({ follower, index }: { follower: Follower; index: number })
       <div
         className={`flex items-center justify-between px-4 py-3 ${styles.row} ${hasInfo ? "cursor-pointer" : ""}`}
         onClick={() => hasInfo && setExpanded((v) => !v)}
-        onMouseEnter={() => follower.reasons.length > 0 && !expanded && setShowTooltip(true)}
-        onMouseLeave={() => setShowTooltip(false)}
+        onMouseEnter={() => follower.reasons.length > 0 && setShowTooltip(true)}
+        onMouseLeave={() => { setShowTooltip(false); setMousePos(null); }}
         onMouseMove={(e) => setMousePos({ x: e.clientX, y: e.clientY })}
       >
         <div className="flex flex-col gap-0.5 min-w-0">
@@ -389,8 +397,8 @@ function FollowerRow({ follower, index }: { follower: Follower; index: number })
           )}
         </div>
 
-        {showTooltip && !expanded && (
-          <Tooltip reasons={follower.reasons} x={mousePos.x} y={mousePos.y} />
+        {showTooltip && mousePos && (
+          <Tooltip reasons={follower.reasons} x={mousePos.x} y={mousePos.y} risk={risk} />
         )}
       </div>
 
@@ -400,7 +408,7 @@ function FollowerRow({ follower, index }: { follower: Follower; index: number })
           <StatChip label="followers" value={fmt(follower.followerCount)} flagged={follower.flaggedFields.includes("followers")} />
           <StatChip label="following" value={fmt(follower.followingCount)} flagged={follower.flaggedFields.includes("following")} />
           <StatChip label="posts" value={String(follower.postCount)} flagged={follower.flaggedFields.includes("posts")} />
-          <StatChip label="joined" value={follower.createdAt} flagged={follower.flaggedFields.includes("age")} />
+          <StatChip label="first post" value={follower.createdAt} flagged={follower.flaggedFields.includes("age")} />
         </div>
       )}
     </div>
