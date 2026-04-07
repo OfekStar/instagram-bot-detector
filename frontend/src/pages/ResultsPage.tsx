@@ -501,39 +501,47 @@ function getBotGrade(percent: number): { grade: string; color: string; label: st
   return { grade: "F", ...GRADE_META["F"] };
 }
 
-const GRADE_CSS: Record<string, { grad: string; hi: string; shadow: string }> = {
-  A: { grad: "linear-gradient(160deg,#fff9c4 0%,#FFD700 30%,#ffe066 55%,#b8860b 80%,#FFD700 100%)", hi: "#fffde7", shadow: "#16a34a" },
-  B: { grad: "linear-gradient(160deg,#e0f2fe 0%,#60a5fa 30%,#bfdbfe 55%,#1d4ed8 80%,#60a5fa 100%)", hi: "#e0f2fe", shadow: "#1d4ed8" },
-  C: { grad: "linear-gradient(160deg,#fef9c3 0%,#fbbf24 30%,#fde68a 55%,#92400e 80%,#fbbf24 100%)", hi: "#fef9c3", shadow: "#b45309" },
-  D: { grad: "linear-gradient(160deg,#ffedd5 0%,#fb923c 30%,#fed7aa 55%,#9a3412 80%,#fb923c 100%)", hi: "#ffedd5", shadow: "#c2410c" },
-  F: { grad: "linear-gradient(160deg,#fee2e2 0%,#ef4444 30%,#fca5a5 55%,#7f1d1d 80%,#ef4444 100%)", hi: "#fca5a5", shadow: "#7f1d1d" },
+const GRADE_STOPS: Record<string, { stops: [string,string,string,string]; shadow: string; dark: string }> = {
+  A: { stops: ["#fffde7","#FFD700","#ffe566","#b8860b"], shadow: "#16a34a", dark: "#052e16" },
+  B: { stops: ["#e0f2fe","#60a5fa","#93c5fd","#1e3a8a"], shadow: "#2563eb", dark: "#0c1a4b" },
+  C: { stops: ["#fefce8","#fbbf24","#fde68a","#78350f"], shadow: "#d97706", dark: "#3d1a00" },
+  D: { stops: ["#fff7ed","#fb923c","#fdba74","#7c2d12"], shadow: "#ea580c", dark: "#3d0f00" },
+  F: { stops: ["#fee2e2","#ef4444","#fca5a5","#450a0a"], shadow: "#dc2626", dark: "#1a0000" },
 };
 
 function GradeLetter({ letter }: { letter: string }) {
-  const { grad, shadow } = GRADE_CSS[letter] ?? GRADE_CSS["F"];
+  const { stops, shadow, dark } = GRADE_STOPS[letter] ?? GRADE_STOPS["F"];
+  const gid = `g-${letter}`;
+  const fid = `f-${letter}`;
   return (
     <div className="relative w-44 h-44 shrink-0 flex items-center justify-center">
-      <span
-        className="select-none leading-none"
-        style={{
-          fontFamily: "'Press Start 2P', monospace",
-          fontSize: "6rem",
-          background: grad,
-          WebkitBackgroundClip: "text",
-          WebkitTextFillColor: "transparent",
-          backgroundClip: "text",
-          textShadow: `
-            2px 2px 0 #000,
-            4px 4px 0 ${shadow}cc,
-            6px 6px 0 ${shadow}88,
-            8px 8px 0 ${shadow}44,
-            0 0 40px ${shadow}55
-          `,
-          filter: "drop-shadow(0 0 8px " + shadow + "66)",
-        }}
-      >
-        {letter}
-      </span>
+      <svg width="176" height="176" viewBox="0 0 176 176" style={{ overflow: "visible" }}>
+        <defs>
+          <linearGradient id={gid} x1="0%" y1="0%" x2="15%" y2="100%">
+            <stop offset="0%"   stopColor={stops[0]} />
+            <stop offset="28%"  stopColor={stops[1]} />
+            <stop offset="55%"  stopColor={stops[2]} />
+            <stop offset="80%"  stopColor={stops[3]} />
+            <stop offset="100%" stopColor={stops[1]} />
+          </linearGradient>
+          <filter id={fid} x="-10%" y="-10%" width="120%" height="120%">
+            {/* Metal grain noise */}
+            <feTurbulence type="fractalNoise" baseFrequency="0.75 0.35" numOctaves="4" seed="2" result="noise"/>
+            <feColorMatrix type="saturate" values="0" in="noise" result="gray"/>
+            <feBlend in="SourceGraphic" in2="gray" mode="overlay" result="textured"/>
+            <feComposite in="textured" in2="SourceAlpha" operator="in" result="clipped"/>
+            {/* Specular pop */}
+            <feComposite in="clipped" in2="SourceAlpha" operator="over"/>
+          </filter>
+        </defs>
+        {/* Deep shadow stack */}
+        <text x="94" y="126" textAnchor="middle" fontFamily="'Press Start 2P',monospace" fontSize="82" fill={dark} opacity="0.9">  {letter}</text>
+        <text x="92" y="124" textAnchor="middle" fontFamily="'Press Start 2P',monospace" fontSize="82" fill={shadow} opacity="0.7">{letter}</text>
+        <text x="90" y="122" textAnchor="middle" fontFamily="'Press Start 2P',monospace" fontSize="82" fill={shadow} opacity="0.4">{letter}</text>
+        {/* Main letter — gradient + texture filter */}
+        <text x="88" y="120" textAnchor="middle" fontFamily="'Press Start 2P',monospace" fontSize="82"
+          fill={`url(#${gid})`} filter={`url(#${fid})`}>{letter}</text>
+      </svg>
       {/* Arcade sparkle — big, glow pulses, slow spin */}
       <span className="absolute top-1 right-1 text-4xl leading-none pointer-events-none select-none"
         style={{ color: "#ffffff", animation: "sparkle 7s linear infinite" }}
