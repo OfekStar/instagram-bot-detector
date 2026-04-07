@@ -2,6 +2,14 @@ import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useSearchParams, useNavigate } from "react-router-dom";
 
+import gradeA from "../assets/grades/A.webp";
+import gradeB from "../assets/grades/B.webp";
+import gradeC from "../assets/grades/C.webp";
+import gradeD from "../assets/grades/D.webp";
+import gradeF from "../assets/grades/F.webp";
+
+const GRADE_IMAGES: Record<string, string> = { A: gradeA, B: gradeB, C: gradeC, D: gradeD, F: gradeF };
+
 type RiskLevel = "high" | "medium" | "low" | "real";
 type FilterType = "all" | RiskLevel;
 type FlaggedField = "followers" | "following" | "posts" | "age";
@@ -494,53 +502,17 @@ function getBotGrade(percent: number): { grade: string; color: string; label: st
 
 function GradeLetter({ letter }: { letter: string }) {
   const glow = GRADE_META[letter]?.glow ?? "#888";
-  const gradId = `metal-${letter}`;
-  const specId = `spec-${letter}`;
-  const glowId = `halo-${letter}`;
   return (
-    <svg width="150" height="150" viewBox="0 0 150 150" aria-label={`Grade ${letter}`}>
-      <defs>
-        <linearGradient id={gradId} x1="0%" y1="0%" x2="10%" y2="100%">
-          <stop offset="0%"   stopColor="#1a1a1a" />
-          <stop offset="15%"  stopColor="#999999" />
-          <stop offset="30%"  stopColor="#f0f0f0" />
-          <stop offset="45%"  stopColor="#ffffff" />
-          <stop offset="58%"  stopColor="#707070" />
-          <stop offset="73%"  stopColor="#383838" />
-          <stop offset="87%"  stopColor="#c8c8c8" />
-          <stop offset="100%" stopColor="#111111" />
-        </linearGradient>
-
-        {/* Colored halo blur */}
-        <filter id={glowId} x="-40%" y="-40%" width="180%" height="180%">
-          <feGaussianBlur stdDeviation="12" />
-        </filter>
-
-        {/* Specular 3D bevel */}
-        <filter id={specId} x="-5%" y="-5%" width="110%" height="110%">
-          <feGaussianBlur in="SourceAlpha" stdDeviation="2.5" result="bump" />
-          <feSpecularLighting in="bump" surfaceScale="6" specularConstant="1.8"
-            specularExponent="28" lightingColor="#ffffff" result="specular">
-            <fePointLight x="45" y="-35" z="110" />
-          </feSpecularLighting>
-          <feComposite in="specular" in2="SourceAlpha" operator="in" result="clipped" />
-          <feBlend in="SourceGraphic" in2="clipped" mode="screen" result="blended" />
-          <feComposite in="blended" in2="SourceAlpha" operator="in" />
-        </filter>
-      </defs>
-
-      {/* Colored glow halo */}
-      <text x="75" y="126" textAnchor="middle" fontSize="148"
-        fontFamily="'Bebas Neue', sans-serif"
-        fill={glow} filter={`url(#${glowId})`} opacity="0.6"
-      >{letter}</text>
-
-      {/* Metallic + specular letter */}
-      <text x="75" y="126" textAnchor="middle" fontSize="148"
-        fontFamily="'Bebas Neue', sans-serif"
-        fill={`url(#${gradId})`} filter={`url(#${specId})`}
-      >{letter}</text>
-    </svg>
+    <div className="relative w-36 h-36 shrink-0">
+      {/* Colored glow halo behind image */}
+      <div className="absolute inset-0 rounded-sm blur-2xl opacity-50"
+        style={{ backgroundColor: glow }} />
+      <img
+        src={GRADE_IMAGES[letter]}
+        alt={`Grade ${letter}`}
+        className="relative w-full h-full object-contain drop-shadow-2xl"
+      />
+    </div>
   );
 }
 
