@@ -501,16 +501,16 @@ function getBotGrade(percent: number): { grade: string; color: string; label: st
   return { grade: "F", ...GRADE_META["F"] };
 }
 
-const GRADE_CSS: Record<string, { color: string; shadow: string }> = {
-  A: { color: "#FFD700", shadow: "#22c55e" },
-  B: { color: "#60a5fa", shadow: "#3b82f6" },
-  C: { color: "#fbbf24", shadow: "#d97706" },
-  D: { color: "#fb923c", shadow: "#ea580c" },
-  F: { color: "#ef4444", shadow: "#7f1d1d" },
+const GRADE_CSS: Record<string, { grad: string; hi: string; shadow: string }> = {
+  A: { grad: "linear-gradient(160deg,#fff9c4 0%,#FFD700 30%,#ffe066 55%,#b8860b 80%,#FFD700 100%)", hi: "#fffde7", shadow: "#16a34a" },
+  B: { grad: "linear-gradient(160deg,#e0f2fe 0%,#60a5fa 30%,#bfdbfe 55%,#1d4ed8 80%,#60a5fa 100%)", hi: "#e0f2fe", shadow: "#1d4ed8" },
+  C: { grad: "linear-gradient(160deg,#fef9c3 0%,#fbbf24 30%,#fde68a 55%,#92400e 80%,#fbbf24 100%)", hi: "#fef9c3", shadow: "#b45309" },
+  D: { grad: "linear-gradient(160deg,#ffedd5 0%,#fb923c 30%,#fed7aa 55%,#9a3412 80%,#fb923c 100%)", hi: "#ffedd5", shadow: "#c2410c" },
+  F: { grad: "linear-gradient(160deg,#fee2e2 0%,#ef4444 30%,#fca5a5 55%,#7f1d1d 80%,#ef4444 100%)", hi: "#fca5a5", shadow: "#7f1d1d" },
 };
 
 function GradeLetter({ letter }: { letter: string }) {
-  const { color, shadow } = GRADE_CSS[letter] ?? GRADE_CSS["F"];
+  const { grad, shadow } = GRADE_CSS[letter] ?? GRADE_CSS["F"];
   return (
     <div className="relative w-44 h-44 shrink-0 flex items-center justify-center">
       <span
@@ -518,14 +518,18 @@ function GradeLetter({ letter }: { letter: string }) {
         style={{
           fontFamily: "'Press Start 2P', monospace",
           fontSize: "6rem",
-          color,
+          background: grad,
+          WebkitBackgroundClip: "text",
+          WebkitTextFillColor: "transparent",
+          backgroundClip: "text",
           textShadow: `
-            3px 3px 0 #000,
-            -1px -1px 0 #000,
-            4px 4px 0 ${shadow},
+            2px 2px 0 #000,
+            4px 4px 0 ${shadow}cc,
             6px 6px 0 ${shadow}88,
-            0 0 30px ${shadow}66
+            8px 8px 0 ${shadow}44,
+            0 0 40px ${shadow}55
           `,
+          filter: "drop-shadow(0 0 8px " + shadow + "66)",
         }}
       >
         {letter}
