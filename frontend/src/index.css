@@ -20,8 +20,9 @@ body {
 }
 
 @keyframes sparkle {
-    0%, 100% { opacity: 1; transform: scale(1) rotate(0deg); }
-    50%       { opacity: 0.3; transform: scale(0.6) rotate(20deg); }
+    0%   { transform: rotate(0deg);   text-shadow: 0 0 6px #fff, 0 0 10px #fff; }
+    50%  { transform: rotate(180deg); text-shadow: 0 0 16px #fff, 0 0 32px #fff, 0 0 56px #fff; }
+    100% { transform: rotate(360deg); text-shadow: 0 0 6px #fff, 0 0 10px #fff; }
 }
 
 
