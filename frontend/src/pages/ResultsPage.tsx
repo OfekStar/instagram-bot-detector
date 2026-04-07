@@ -7,6 +7,7 @@ import gradeB from "../assets/grades/B.webp";
 import gradeC from "../assets/grades/C.webp";
 import gradeD from "../assets/grades/D.webp";
 import gradeF from "../assets/grades/F.webp";
+import sparkleImg from "../assets/grades/sparkle.webp";
 
 const GRADE_IMAGES: Record<string, string> = { A: gradeA, B: gradeB, C: gradeC, D: gradeD, F: gradeF };
 
@@ -509,10 +510,11 @@ function GradeLetter({ letter }: { letter: string }) {
         className="w-full h-full object-contain"
         style={{ mixBlendMode: "screen" }}
       />
-      {/* Arcade sparkle — top-right corner, IG-colored */}
-      <span className="absolute top-3 right-3 text-xl leading-none pointer-events-none select-none"
-        style={{ color: "#fcaf45", textShadow: "0 0 8px #fcaf45, 0 0 16px #fd1d1d", animation: "sparkle 2.5s ease-in-out infinite" }}
-      >✦</span>
+      {/* Arcade sparkle sprite — top-right corner */}
+      <img src={sparkleImg} alt="" aria-hidden
+        className="absolute top-1 right-1 w-10 h-10 pointer-events-none select-none"
+        style={{ mixBlendMode: "screen", animation: "sparkle 2.5s ease-in-out infinite" }}
+      />
     </div>
   );
 }
