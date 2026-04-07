@@ -25,6 +25,18 @@ interface Follower {
   reasons: Reason[];
 }
 
+const FIELD_REASONS: Record<FlaggedField, Reason> = {
+  followers: { text: "Very few followers",              severity: "medium" },
+  following: { text: "Follows an unusually high number of accounts", severity: "high" },
+  posts:     { text: "No posts or extremely few posts", severity: "high" },
+  age:       { text: "Very new or recently created account", severity: "medium" },
+};
+
+function getReasons(follower: Follower): Reason[] {
+  if (follower.reasons.length > 0) return follower.reasons;
+  return follower.flaggedFields.map((f) => FIELD_REASONS[f]);
+}
+
 function getRiskLevel(score: number): RiskLevel {
   if (score >= 75) return "high";
   if (score >= 40) return "medium";
@@ -378,7 +390,8 @@ function FollowerRow({ follower, index }: { follower: Follower; index: number })
     return () => window.removeEventListener("scroll", hide);
   }, []);
 
-  const hasInfo = follower.reasons.length > 0 || follower.flaggedFields.length > 0;
+  const reasons = getReasons(follower);
+  const hasInfo = reasons.length > 0 || follower.flaggedFields.length > 0;
 
   return (
     <div className={`rounded-sm border-l-4 ${styles.border} transition-all duration-300 ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"}`}>
@@ -386,7 +399,7 @@ function FollowerRow({ follower, index }: { follower: Follower; index: number })
       <div
         className={`flex items-center justify-between px-4 py-3 ${styles.row} ${hasInfo ? "cursor-pointer" : ""} hover:brightness-105 transition-all duration-150`}
         onClick={() => hasInfo && setExpanded((v) => !v)}
-        onMouseEnter={() => follower.reasons.length > 0 && setShowTooltip(true)}
+        onMouseEnter={() => reasons.length > 0 && setShowTooltip(true)}
         onMouseLeave={() => { setShowTooltip(false); setMousePos(null); }}
         onMouseMove={(e) => setMousePos({ x: e.clientX, y: e.clientY })}
       >
@@ -411,7 +424,7 @@ function FollowerRow({ follower, index }: { follower: Follower; index: number })
         </div>
 
         {showTooltip && mousePos && (
-          <Tooltip reasons={follower.reasons} x={mousePos.x} y={mousePos.y} risk={risk} />
+          <Tooltip reasons={reasons} x={mousePos.x} y={mousePos.y} risk={risk} />
         )}
       </div>
 
