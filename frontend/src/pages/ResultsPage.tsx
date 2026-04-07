@@ -505,8 +505,8 @@ function GradeLetter({ letter }: { letter: string }) {
   return (
     <div className="relative w-44 h-44 shrink-0">
       {/* Atmospheric glow — spreads beyond image bounds */}
-      <div className="absolute rounded-full blur-3xl opacity-25 pointer-events-none"
-        style={{ backgroundColor: glow, inset: "-30%" }} />
+      <div className="absolute rounded-full blur-3xl opacity-10 pointer-events-none"
+        style={{ backgroundColor: glow, inset: "-20%" }} />
       <img
         src={GRADE_IMAGES[letter]}
         alt={`Grade ${letter}`}
