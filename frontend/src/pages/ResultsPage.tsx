@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 
 type RiskLevel = "high" | "medium" | "low" | "real";
@@ -200,12 +200,124 @@ const RISK_STYLES: Record<
   },
 };
 
+const LOADING_STEPS = [
+  "Fetching followers…",
+  "Analyzing usernames…",
+  "Checking profile signals…",
+  "Computing bot scores…",
+  "Almost done…",
+];
+
+function LoadingView({ profile }: { profile: string }) {
+  const [step, setStep] = useState(0);
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    const stepInterval = setInterval(() => {
+      setStep((s) => Math.min(s + 1, LOADING_STEPS.length - 1));
+    }, 800);
+    const progressInterval = setInterval(() => {
+      setProgress((p) => Math.min(p + 1, 95));
+    }, 40);
+    return () => {
+      clearInterval(stepInterval);
+      clearInterval(progressInterval);
+    };
+  }, []);
+
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center px-4">
+      <div className="w-full max-w-sm flex flex-col items-center gap-8">
+        {/* Spinner */}
+        <div className="relative w-16 h-16">
+          <div className="absolute inset-0 rounded-sm ig-gradient opacity-20" />
+          <div
+            className="absolute inset-0 rounded-sm border-2 border-transparent animate-spin"
+            style={{
+              background:
+                "linear-gradient(#0a0a0a, #0a0a0a) padding-box, linear-gradient(45deg, #833ab4, #fd1d1d, #fcaf45) border-box",
+              animationDuration: "900ms",
+            }}
+          />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="white"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="w-6 h-6 opacity-60"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.35-4.35" />
+            </svg>
+          </div>
+        </div>
+
+        {/* Text */}
+        <div className="flex flex-col items-center gap-2 text-center">
+          <p className="text-white text-sm font-medium">
+            Scanning{" "}
+            <span className="ig-gradient-text font-semibold">@{profile}</span>
+          </p>
+          <p className="text-zinc-500 text-xs h-4 transition-all duration-300">
+            {LOADING_STEPS[step]}
+          </p>
+        </div>
+
+        {/* Progress bar */}
+        <div className="w-full flex flex-col gap-1.5">
+          <div className="w-full h-1 bg-zinc-800 rounded-sm overflow-hidden">
+            <div
+              className="h-full ig-gradient transition-all duration-75 ease-linear rounded-sm"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+          <p className="text-zinc-700 text-[10px] text-right tabular-nums">
+            {progress}%
+          </p>
+        </div>
+
+        {/* Skeleton rows */}
+        <div className="w-full flex flex-col gap-1.5">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div
+              key={i}
+              className="flex items-center justify-between px-4 py-3 rounded-sm border-l-4 border-l-zinc-800 bg-zinc-900/20 animate-pulse"
+              style={{ animationDelay: `${i * 120}ms` }}
+            >
+              <div className="flex flex-col gap-1.5">
+                <div
+                  className="h-3 bg-zinc-800 rounded-sm"
+                  style={{ width: `${90 + i * 15}px` }}
+                />
+                <div className="h-2.5 w-16 bg-zinc-800/60 rounded-sm" />
+              </div>
+              <div className="h-6 w-8 bg-zinc-800 rounded-sm" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function ResultsPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const profile = searchParams.get("profile") ?? "";
 
+  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterType>("all");
+
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 4000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (loading) return <LoadingView profile={profile} />;
 
   const sorted = [...MOCK_FOLLOWERS].sort((a, b) => b.botScore - a.botScore);
 
