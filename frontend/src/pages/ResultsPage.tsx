@@ -501,18 +501,18 @@ function getBotGrade(percent: number): { grade: string; color: string; label: st
 }
 
 function GradeLetter({ letter }: { letter: string }) {
-  const glow = GRADE_META[letter]?.glow ?? "#888";
   return (
     <div className="relative w-44 h-44 shrink-0">
-      {/* Atmospheric glow — spreads beyond image bounds */}
-      <div className="absolute rounded-full blur-3xl opacity-10 pointer-events-none"
-        style={{ backgroundColor: glow, inset: "-20%" }} />
       <img
         src={GRADE_IMAGES[letter]}
         alt={`Grade ${letter}`}
-        className="relative w-full h-full object-contain"
+        className="w-full h-full object-contain"
         style={{ mixBlendMode: "screen" }}
       />
+      {/* Arcade sparkle — top-right corner */}
+      <span className="absolute top-3 right-3 text-white text-xl leading-none pointer-events-none select-none"
+        style={{ textShadow: "0 0 6px #fff, 0 0 12px #fff", animation: "sparkle 2.5s ease-in-out infinite" }}
+      >✦</span>
     </div>
   );
 }

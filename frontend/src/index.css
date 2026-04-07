@@ -19,6 +19,11 @@ body {
     font-family: 'Space Grotesk', system-ui, sans-serif;
 }
 
+@keyframes sparkle {
+    0%, 100% { opacity: 1; transform: scale(1) rotate(0deg); }
+    50%       { opacity: 0.3; transform: scale(0.6) rotate(20deg); }
+}
+
 
 #root {
     min-height: 100svh;
