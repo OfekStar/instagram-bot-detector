@@ -424,37 +424,58 @@ function getBotGrade(percent: number): {
 }
 
 function ProfileHeader({ profile }: { profile: string }) {
+  const [expanded, setExpanded] = useState(false);
+
   return (
-    <div className="border border-zinc-800 rounded-sm bg-zinc-900/30 p-5 flex items-center gap-5">
-      <div className="w-14 h-14 ig-gradient rounded-sm flex items-center justify-center shrink-0">
-        <span className="text-white font-bold text-xl uppercase">
-          {profile[0] ?? "?"}
-        </span>
-      </div>
-      <div className="flex flex-col gap-2 min-w-0">
-        <div className="flex items-center gap-3 flex-wrap">
-          <span className="text-white font-bold text-base">@{profile}</span>
+    <div className="border border-zinc-800 rounded-sm bg-zinc-900/30 overflow-hidden">
+      <div className="h-1 w-full ig-gradient" />
+
+      {/* Main row — always visible */}
+      <button
+        onClick={() => setExpanded((v) => !v)}
+        className="w-full p-5 flex items-center gap-5 cursor-pointer hover:bg-zinc-800/20 transition-colors text-left"
+      >
+        <div className="w-16 h-16 ig-gradient rounded-sm flex items-center justify-center shrink-0">
+          <span className="text-white font-black text-2xl uppercase select-none">
+            {profile[0] ?? "?"}
+          </span>
+        </div>
+        <div className="flex flex-col gap-1 min-w-0 flex-1">
+          <span className="text-white font-bold text-2xl tracking-tight">@{profile}</span>
           <a
             href={`https://instagram.com/${profile}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-zinc-500 hover:text-zinc-300 text-xs transition-colors"
+            onClick={(e) => e.stopPropagation()}
+            className="text-zinc-500 hover:text-zinc-300 text-xs transition-colors w-fit"
           >
             instagram.com/{profile} ↗
           </a>
         </div>
-        <div className="flex gap-4">
-          <span className="text-zinc-400 text-xs">
-            <span className="text-white font-semibold">{fmt(MOCK_PROFILE.followers)}</span> followers
-          </span>
-          <span className="text-zinc-400 text-xs">
-            <span className="text-white font-semibold">{fmt(MOCK_PROFILE.following)}</span> following
-          </span>
-          <span className="text-zinc-400 text-xs">
-            <span className="text-white font-semibold">{MOCK_PROFILE.posts}</span> posts
-          </span>
+        <span className={`text-zinc-500 text-sm transition-transform duration-200 shrink-0 ${expanded ? "rotate-180" : ""}`}>
+          ▾
+        </span>
+      </button>
+
+      {/* Expanded stats */}
+      {expanded && (
+        <div className="border-t border-zinc-800 px-5 py-4 flex gap-6">
+          <div className="flex flex-col gap-0.5">
+            <span className="text-white font-bold text-lg leading-none">{fmt(MOCK_PROFILE.followers)}</span>
+            <span className="text-zinc-500 text-[11px] uppercase tracking-wide">followers</span>
+          </div>
+          <div className="w-px bg-zinc-800" />
+          <div className="flex flex-col gap-0.5">
+            <span className="text-white font-bold text-lg leading-none">{fmt(MOCK_PROFILE.following)}</span>
+            <span className="text-zinc-500 text-[11px] uppercase tracking-wide">following</span>
+          </div>
+          <div className="w-px bg-zinc-800" />
+          <div className="flex flex-col gap-0.5">
+            <span className="text-white font-bold text-lg leading-none">{MOCK_PROFILE.posts}</span>
+            <span className="text-zinc-500 text-[11px] uppercase tracking-wide">posts</span>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
@@ -689,7 +710,6 @@ export default function ResultsPage() {
 
   const botPercent = Math.round(((counts.high + counts.medium) / counts.all) * 100);
   const grade = getBotGrade(botPercent);
-  const topBots = sorted.filter((f) => getRiskLevel(f.botScore) === "high").slice(0, 3);
 
   return (
     <div className="min-h-screen flex flex-col items-center px-4 py-10">
@@ -743,30 +763,6 @@ export default function ResultsPage() {
             </div>
           </div>
         </div>
-
-        {/* Top 3 worst offenders */}
-        {topBots.length > 0 && (
-          <div className="flex flex-col gap-2">
-            <p className="text-zinc-500 text-[11px] uppercase tracking-wider">Top offenders</p>
-            <div className="flex flex-col gap-1">
-              {topBots.map((f, i) => (
-                <div key={f.id} className="flex items-center gap-3 px-4 py-2.5 border border-red-900/50 bg-red-950/20 rounded-sm">
-                  <span className="text-red-900 font-black text-sm w-4 tabular-nums">#{i + 1}</span>
-                  <div className="flex-1 min-w-0">
-                    <span className="text-white text-sm font-medium truncate">@{f.username}</span>
-                    {f.displayName ? <span className="text-zinc-500 text-xs ml-2">{f.displayName}</span> : null}
-                  </div>
-                  {f.isKnownBot && (
-                    <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-sm bg-red-900/60 text-red-300 shrink-0">
-                      Known Bot
-                    </span>
-                  )}
-                  <span className="text-red-400 font-bold tabular-nums text-sm shrink-0">{f.botScore}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* Account List */}
         <div className="flex flex-col gap-1.5">
