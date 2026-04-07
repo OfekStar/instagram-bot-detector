@@ -509,9 +509,9 @@ function GradeLetter({ letter }: { letter: string }) {
         className="w-full h-full object-contain"
         style={{ mixBlendMode: "screen" }}
       />
-      {/* Arcade sparkle — top-right corner */}
-      <span className="absolute top-3 right-3 text-white text-xl leading-none pointer-events-none select-none"
-        style={{ textShadow: "0 0 6px #fff, 0 0 12px #fff", animation: "sparkle 2.5s ease-in-out infinite" }}
+      {/* Arcade sparkle — top-right corner, IG-colored */}
+      <span className="absolute top-3 right-3 text-xl leading-none pointer-events-none select-none"
+        style={{ color: "#fcaf45", textShadow: "0 0 8px #fcaf45, 0 0 16px #fd1d1d", animation: "sparkle 2.5s ease-in-out infinite" }}
       >✦</span>
     </div>
   );
