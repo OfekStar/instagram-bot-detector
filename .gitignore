@@ -20,7 +20,8 @@ __pycache__/
 # OS
 .DS_Store
 
-# Agent / session files — never push these
+# Agent / session files + project notes — never push these
+notes/
 CLAUDE.md
 SUMMARY.md
 prompts-lesson*.md
