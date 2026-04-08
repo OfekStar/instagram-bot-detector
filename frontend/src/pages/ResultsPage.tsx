@@ -634,20 +634,11 @@ export default function ResultsPage() {
     <div className="min-h-screen flex flex-col items-center px-4 py-10">
       <div className="w-full max-w-2xl flex flex-col gap-8">
 
-        {/* Back + debug letter preview */}
-        <div className="flex items-center justify-between">
+        {/* Back */}
+        <div>
           <button onClick={() => navigate("/")} className="text-zinc-600 hover:text-zinc-400 text-xs transition-colors cursor-pointer">
             ← Back
           </button>
-          {/* DEBUG — remove before launch */}
-          <div className="flex gap-2">
-            {(["A","B","C","D","F"] as const).map((l) => (
-              <div key={l} className="flex flex-col items-center gap-1">
-                <GradeLetter letter={l} />
-                <span className="text-zinc-500 text-[10px]">{l}</span>
-              </div>
-            ))}
-          </div>
         </div>
 
         {/* Profile header — open, no box */}
