@@ -540,7 +540,7 @@ const GRADE_IMAGES: Record<string, string> = { A: gradeA, B: gradeB, C: gradeC, 
 function GradeLetter({ letter }: { letter: string }) {
   const meta   = GRADE_LETTER_STYLE[letter] ?? GRADE_LETTER_STYLE.F;
   const parts  = GRADE_PARTICLES[letter]    ?? GRADE_PARTICLES.F;
-  const slots  = PARTICLE_POSITIONS.slice(0, parts.count);
+
   const img    = GRADE_IMAGES[letter];
   const sizeClass = letter === "F" ? "w-56 h-56" : "w-44 h-44";
 
