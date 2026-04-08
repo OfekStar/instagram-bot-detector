@@ -19,3 +19,12 @@ __pycache__/
 
 # OS
 .DS_Store
+
+# Agent / session files — never push these
+CLAUDE.md
+SUMMARY.md
+prompts-lesson*.md
+frontend/CLAUDE.md
+frontend/PROMPTS.md
+frontend/SUMMARY.md
+backend/CLAUDE.md

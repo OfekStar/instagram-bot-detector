@@ -61,10 +61,25 @@ The current lesson number must be tracked and used on every entry.
 - Conventional commits with body when change is non-obvious or multi-part
 - Stage files by name explicitly — never `git add .` or `git add -A`
 - Commit hash goes in the prompts file entry
+- Always load the `git-best-practices` skill before committing or opening PRs
+
+### PR Titles
+- Format: `type(scope): description of what the code does`
+- Describe the feature/fix — NOT lesson numbers, session names, or course artifacts
+- Good: `feat(frontend): results page with bot scoring and filter UI`
+- Bad: `feat(frontend): complete Lesson 04 UI`
+
+## What NOT to commit
+The root `.gitignore` excludes these — never force-add them:
+- `CLAUDE.md`, `SUMMARY.md`, `prompts-lesson*.md` — agent/session files
+- `frontend/PROMPTS.md`, `frontend/SUMMARY.md` — frontend session files
+- `*.csv` — contain real usernames
+- `.env` — credentials
+- `node_modules/`, `dist/` — generated output
 
 ## Skills
 Always load and follow these skills when relevant:
-- `git-best-practices` — use for all commits, branches, and PRs
+- `git-best-practices` — use for ALL commits, branches, and PRs — load it every time
 - `documentation-writer` — use when writing or updating any `.md` files
 - `find-skills` — use when a task might benefit from a skill not listed here
 
