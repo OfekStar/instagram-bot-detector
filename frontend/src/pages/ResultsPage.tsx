@@ -1,13 +1,34 @@
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useSearchParams, useNavigate } from "react-router-dom";
-
 import gradeA from "../assets/grades/A.webp";
 import gradeB from "../assets/grades/B.webp";
 import gradeC from "../assets/grades/C.webp";
 import gradeD from "../assets/grades/D.webp";
 import gradeF from "../assets/grades/F.webp";
-const GRADE_IMAGES: Record<string, string> = { A: gradeA, B: gradeB, C: gradeC, D: gradeD, F: gradeF };
+
+const GRADE_LETTER_STYLE: Record<string, { gradient: string; glow: string }> = {
+  A: {
+    gradient: "linear-gradient(150deg, #2a1a00 0%, #a06800 8%, #ffe566 16%, #ffd700 24%, #8a5a00 34%, #ffe566 42%, #ffd700 50%, #7a4e00 60%, #ffc200 70%, #fff8b0 80%, #c68a00 90%, #2a1a00 100%)",
+    glow: "rgba(255,210,0,0.9)",
+  },
+  B: {
+    gradient: "linear-gradient(150deg, #061a0e 0%, #1a5c36 8%, #a0ffcc 16%, #50c878 24%, #0e3d20 34%, #a0ffcc 42%, #50c878 50%, #0a3018 60%, #3da864 70%, #c8ffe0 80%, #1a6b3c 90%, #061a0e 100%)",
+    glow: "rgba(80,200,120,0.85)",
+  },
+  C: {
+    gradient: "linear-gradient(150deg, #000e1e 0%, #0a4a8a 8%, #90d8ff 16%, #38aaee 24%, #042060 34%, #90d8ff 42%, #38aaee 50%, #031848 60%, #1a7acc 70%, #c0eaff 80%, #0a5aaa 90%, #000e1e 100%)",
+    glow: "rgba(56,170,238,0.85)",
+  },
+  D: {
+    gradient: "linear-gradient(150deg, #220b00 0%, #7a3000 8%, #ffcc80 16%, #dd6018 24%, #5c2000 34%, #ffcc80 42%, #dd6018 50%, #4a1a00 60%, #c05010 70%, #ffddaa 80%, #8a3a00 90%, #220b00 100%)",
+    glow: "rgba(220,96,24,0.85)",
+  },
+  F: {
+    gradient: "linear-gradient(150deg, #0c0000 0%, #5a0000 8%, #ff4040 16%, #bb0000 24%, #3c0000 34%, #ff3030 42%, #bb0000 50%, #2a0000 60%, #990000 70%, #ff6060 80%, #770000 90%, #0c0000 100%)",
+    glow: "rgba(187,0,0,0.9)",
+  },
+};
 
 type RiskLevel = "high" | "medium" | "low" | "real";
 type FilterType = "all" | RiskLevel;
@@ -445,7 +466,7 @@ function FollowerRow({ follower, index }: { follower: Follower; index: number })
 
         <div className="flex flex-col gap-0.5 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-display text-white text-sm font-bold truncate">@{follower.username}</span>
+            <a href={`https://instagram.com/${follower.username}`} target="_blank" rel="noopener noreferrer" className="font-display text-white text-sm font-bold truncate hover:underline" onClick={(e) => e.stopPropagation()}>@{follower.username}</a>
             {follower.isKnownBot && (
               <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-sm bg-red-900/60 text-red-300 shrink-0">Known Bot</span>
             )}
@@ -454,13 +475,13 @@ function FollowerRow({ follower, index }: { follower: Follower; index: number })
         </div>
 
         <div className="flex items-center gap-3 shrink-0 ml-4">
+          {hasInfo && (
+            <span className={`text-zinc-500 text-xs transition-transform duration-200 ${expanded ? "rotate-180" : ""}`}>▾</span>
+          )}
           <div className="flex flex-col items-end">
             <span className={`font-display text-2xl font-black leading-none ${styles.score}`} style={{ textShadow: SCORE_GLOW[risk] }}>{accountGrade.letter}</span>
             <span className="text-zinc-600 text-[10px] uppercase tracking-widest">grade</span>
           </div>
-          {hasInfo && (
-            <span className={`text-zinc-500 text-xs transition-transform duration-200 ${expanded ? "rotate-180" : ""}`}>▾</span>
-          )}
         </div>
 
         {showTooltip && mousePos && (
@@ -499,19 +520,61 @@ function getBotGrade(percent: number): { grade: string; color: string; label: st
   return { grade: "F", ...GRADE_META["F"] };
 }
 
+const GRADE_PARTICLES: Record<string, { emoji: string; color: string; animation: string; count: number }> = {
+  A: { emoji: "✦", color: "#ffe066", animation: "twinkle",   count: 4 },
+  B: { emoji: "✦", color: "#a0ffcc", animation: "twinkle",   count: 3 },
+  C: { emoji: "✧", color: "#90d8ff", animation: "pulse-dim", count: 2 },
+  D: { emoji: "🔥", color: "unset",  animation: "floatUp",   count: 3 },
+  F: { emoji: "💀", color: "unset",  animation: "floatUp",   count: 3 },
+};
+
+const PARTICLE_POSITIONS = [
+  { top: "4px",  right: "6px",  size: "1.4rem", delay: "0s",    duration: "3.2s" },
+  { top: "18px", right: "28px", size: "1rem",   delay: "1.1s",  duration: "4s"   },
+  { top: "8px",  left:  "10px", size: "1.1rem", delay: "2.2s",  duration: "3.6s" },
+  { top: "30px", left:  "30px", size: "0.85rem",delay: "0.6s",  duration: "4.4s" },
+];
+
+const GRADE_IMAGES: Record<string, string> = { A: gradeA, B: gradeB, C: gradeC, D: gradeD, F: gradeF };
+
 function GradeLetter({ letter }: { letter: string }) {
+  const meta   = GRADE_LETTER_STYLE[letter] ?? GRADE_LETTER_STYLE.F;
+  const parts  = GRADE_PARTICLES[letter]    ?? GRADE_PARTICLES.F;
+  const slots  = PARTICLE_POSITIONS.slice(0, parts.count);
+  const img    = GRADE_IMAGES[letter];
+  const sizeClass = letter === "F" ? "w-56 h-56" : "w-44 h-44";
+
   return (
-    <div className="relative w-44 h-44 shrink-0">
-      <img
-        src={GRADE_IMAGES[letter]}
-        alt={`Grade ${letter}`}
-        className="w-full h-full object-contain"
-        style={{ mixBlendMode: "screen" }}
+    <div className={`relative ${sizeClass} shrink-0 flex items-center justify-center`}>
+      {/* Ambient floor glow */}
+      <div
+        className="absolute bottom-0 left-1/2 -translate-x-1/2 w-32 h-5 rounded-full blur-2xl pointer-events-none"
+        style={{ background: meta.glow, opacity: 0.5 }}
       />
-      {/* Arcade sparkle — big, glow pulses, slow spin */}
-      <span className="absolute top-1 right-1 text-4xl leading-none pointer-events-none select-none"
-        style={{ color: "#ffffff", animation: "sparkle 7s linear infinite" }}
-      >✦</span>
+      {img ? (
+        <img src={img} alt={`Grade ${letter}`} className="w-full h-full object-contain" style={{ mixBlendMode: "screen", animation: "grade-breathe 3s ease-in-out infinite", color: meta.glow }} />
+      ) : (
+        <span
+          className="relative select-none leading-none"
+          style={{
+            fontFamily: '"Orbitron", sans-serif',
+            fontWeight: 900,
+            fontSize: "8rem",
+            letterSpacing: "-0.05em",
+            background: meta.gradient,
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            backgroundClip: "text",
+            filter: [
+              `drop-shadow(0 0 30px ${meta.glow})`,
+              `drop-shadow(0 0 12px ${meta.glow})`,
+              `drop-shadow(0 8px 20px rgba(0,0,0,1))`,
+            ].join(" "),
+          }}
+        >
+          {letter}
+        </span>
+      )}
     </div>
   );
 }
