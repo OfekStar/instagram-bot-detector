@@ -20,12 +20,10 @@ __pycache__/
 # OS
 .DS_Store
 
-# Agent / session files + project notes — never push these
+# Project notes — all session files, guides, and references live here
 notes/
+
+# Agent rules — Claude Code reads these from their locations, never commit them
 CLAUDE.md
-SUMMARY.md
-prompts-lesson*.md
 frontend/CLAUDE.md
-frontend/PROMPTS.md
-frontend/SUMMARY.md
 backend/CLAUDE.md
