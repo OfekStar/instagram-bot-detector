@@ -520,27 +520,11 @@ function getBotGrade(percent: number): { grade: string; color: string; label: st
   return { grade: "F", ...GRADE_META["F"] };
 }
 
-const GRADE_PARTICLES: Record<string, { emoji: string; color: string; animation: string; count: number }> = {
-  A: { emoji: "✦", color: "#ffe066", animation: "twinkle",   count: 4 },
-  B: { emoji: "✦", color: "#a0ffcc", animation: "twinkle",   count: 3 },
-  C: { emoji: "✧", color: "#90d8ff", animation: "pulse-dim", count: 2 },
-  D: { emoji: "🔥", color: "unset",  animation: "floatUp",   count: 3 },
-  F: { emoji: "💀", color: "unset",  animation: "floatUp",   count: 3 },
-};
-
-const PARTICLE_POSITIONS = [
-  { top: "4px",  right: "6px",  size: "1.4rem", delay: "0s",    duration: "3.2s" },
-  { top: "18px", right: "28px", size: "1rem",   delay: "1.1s",  duration: "4s"   },
-  { top: "8px",  left:  "10px", size: "1.1rem", delay: "2.2s",  duration: "3.6s" },
-  { top: "30px", left:  "30px", size: "0.85rem",delay: "0.6s",  duration: "4.4s" },
-];
 
 const GRADE_IMAGES: Record<string, string> = { A: gradeA, B: gradeB, C: gradeC, D: gradeD, F: gradeF };
 
 function GradeLetter({ letter }: { letter: string }) {
-  const meta   = GRADE_LETTER_STYLE[letter] ?? GRADE_LETTER_STYLE.F;
-  const parts  = GRADE_PARTICLES[letter]    ?? GRADE_PARTICLES.F;
-
+  const meta = GRADE_LETTER_STYLE[letter] ?? GRADE_LETTER_STYLE.F;
   const img    = GRADE_IMAGES[letter];
   const sizeClass = letter === "F" ? "w-56 h-56" : "w-44 h-44";
 
