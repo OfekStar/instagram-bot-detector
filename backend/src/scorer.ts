@@ -1,5 +1,46 @@
 import { Follower, FlaggedField, Reason } from "./types";
 
+// --- Username heuristics ---
+
+function gibberishScore(username: string): number {
+  const clean = username.replace(/[^a-zA-Z]/g, "").toLowerCase();
+  if (clean.length < 3) return 0;
+  const vowels = new Set(["a", "e", "i", "o", "u"]);
+  let maxRun = 0;
+  let run = 0;
+  for (const c of clean) {
+    if (!vowels.has(c)) { run++; maxRun = Math.max(maxRun, run); }
+    else run = 0;
+  }
+  const vowelRatio = [...clean].filter((c) => vowels.has(c)).length / clean.length;
+  let score = 0;
+  if (maxRun >= 5) score += 0.5;
+  else if (maxRun >= 4) score += 0.2;
+  if (vowelRatio < 0.15) score += 0.4;
+  return Math.min(score, 1.0);
+}
+
+function hasRandomPattern(username: string): boolean {
+  const clean = username.replace(/[._]/g, "");
+  return /^[a-zA-Z]{1,3}\d{4,}$/.test(clean) || /^[a-z]{1,4}\d{3,}[a-z]*$/.test(clean);
+}
+
+function hasEmailProvider(username: string): boolean {
+  return /gmai|yahoo|hotma|outlook|proton/.test(username.toLowerCase());
+}
+
+function hasRepeatedChars(username: string): boolean {
+  return /(.)\1{3,}/.test(username.replace(/[._]/g, ""));
+}
+
+function hasUnderscorePadding(username: string): boolean {
+  const leading = username.length - username.replace(/^_+/, "").length;
+  const trailing = username.length - username.replace(/_+$/, "").length;
+  return leading + trailing >= 2;
+}
+
+// --- Main scoring function ---
+
 export function scoreAccount(
   account: Follower
 ): { botScore: number; flaggedFields: FlaggedField[]; reasons: Reason[] } {
@@ -38,20 +79,50 @@ export function scoreAccount(
     reasons.push({ text: "Low post count", severity: "low" });
   }
 
-  // 3. Username pattern — spam keywords
-  const spamKeywords = ["follow4follow", "free_likes", "buy_ig", "promo", "boost", "auto_"];
-  const hasSpamKeyword = spamKeywords.some((kw) =>
-    account.username.toLowerCase().includes(kw)
-  );
-  if (hasSpamKeyword) {
+  // 3. Spam keywords in username
+  const spamKeywords = [
+    "follow4follow", "free_likes", "buy_ig", "promo", "boost", "auto_",
+    "sale", "shop", "deal", "free", "win", "click", "crypto", "forex",
+    "earn", "income", "invest", "dm_for", "collab",
+  ];
+  if (spamKeywords.some((kw) => account.username.toLowerCase().includes(kw))) {
     score += 20;
     reasons.push({ text: "Spam keyword in username", severity: "high" });
   }
 
-  // 4. Numeric suffix (e.g. user_48291)
-  if (/[_.]?\d{4,}$/.test(account.username)) {
+  // 4. Username pattern signals
+  const username = account.username;
+
+  if (hasEmailProvider(username)) {
+    score += 15;
+    reasons.push({ text: "Email provider name in username", severity: "high" });
+  }
+
+  if (hasRandomPattern(username)) {
+    score += 12;
+    reasons.push({ text: "Random character pattern in username", severity: "medium" });
+  } else if (/[_.]?\d{4,}$/.test(username)) {
     score += 8;
     reasons.push({ text: "Long numeric suffix in username", severity: "medium" });
+  }
+
+  const gs = gibberishScore(username);
+  if (gs >= 0.7) {
+    score += 12;
+    reasons.push({ text: "Username looks like random characters", severity: "medium" });
+  } else if (gs >= 0.4) {
+    score += 6;
+    reasons.push({ text: "Username has low readability", severity: "low" });
+  }
+
+  if (hasRepeatedChars(username)) {
+    score += 8;
+    reasons.push({ text: "Repeated characters in username", severity: "low" });
+  }
+
+  if (hasUnderscorePadding(username)) {
+    score += 5;
+    reasons.push({ text: "Unusual underscore padding in username", severity: "low" });
   }
 
   // 5. Account age
@@ -73,7 +144,6 @@ export function scoreAccount(
     reasons.push({ text: "Known bot account", severity: "high" });
   }
 
-  // Deduplicate flaggedFields
   const uniqueFields = [...new Set(flaggedFields)] as FlaggedField[];
 
   return {
