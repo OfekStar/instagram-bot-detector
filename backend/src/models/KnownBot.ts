@@ -7,6 +7,7 @@ import {
   DataType,
   UpdatedAt,
 } from "sequelize-typescript";
+import { FlaggedField, Reason } from "../types";
 
 @Table({ tableName: "known_bots", timestamps: true })
 export class KnownBot extends Model {
@@ -39,10 +40,10 @@ export class KnownBot extends Model {
   declare firstPostDate: string;
 
   @Column(DataType.JSONB)
-  declare flaggedFields: string[];
+  declare flaggedFields: FlaggedField[];
 
   @Column(DataType.JSONB)
-  declare reasons: { text: string; severity: "high" | "medium" | "low" }[];
+  declare reasons: Reason[];
 
   @UpdatedAt
   declare lastSeenAt: Date;
