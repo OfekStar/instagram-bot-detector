@@ -9,9 +9,9 @@ Paste a public Instagram profile URL — the app fetches its followers, scores e
 | Area | State |
 |------|-------|
 | Frontend UI | ✅ Complete — profile input, results list, filters, score breakdown |
-| Express backend | 🔨 In progress — scaffold + mock data |
+| Express backend | ✅ Complete — POST /api/analyze with scoring engine |
+| Database | ✅ Complete — PostgreSQL + sequelize-typescript, known_bots cache |
 | Frontend ↔ Backend | ⬜ Not started (Lesson 07) |
-| Database | ⬜ Not started (Lesson 06) |
 | Real Instagram scraping | ⬜ Not started (Lesson 08+) |
 
 ---
@@ -20,11 +20,12 @@ Paste a public Instagram profile URL — the app fetches its followers, scores e
 
 1. User submits a public Instagram username via the React UI
 2. Express backend accepts `POST /api/analyze` with `{ username: string }`
-3. Each follower is run through a scoring function — heuristic signals produce a bot score (0–100)
-4. Results are returned sorted high → low, with flagged fields and human-readable reasons
-5. Frontend displays color-coded rows with expandable score breakdowns
+3. Each follower is checked against the `known_bots` DB cache — if a fresh result exists (< 7 days old) it's returned immediately
+4. On a cache miss: the scoring function runs heuristic signals to produce a bot score (0–100), then saves the result to PostgreSQL
+5. Results are returned sorted high → low, with flagged fields and human-readable reasons
+6. Frontend displays color-coded rows with expandable score breakdowns
 
-> **Right now:** the backend returns mock followers. Real Instagram scraping is a future milestone.
+> **Right now:** the backend uses mock followers. Real Instagram scraping is a future milestone.
 
 ---
 
@@ -34,7 +35,7 @@ Paste a public Instagram profile URL — the app fetches its followers, scores e
 |-------|------------|
 | Frontend | React 19 + TypeScript, Vite 8, Tailwind CSS v4, React Router v7 |
 | Backend | Express 5 + TypeScript, ts-node, Node.js 24 |
-| Database | PostgreSQL + sequelize-typescript *(planned)* |
+| Database | PostgreSQL 16 + sequelize-typescript |
 | Scripts | Python 3 (scoring) + Bash (Instagram fetch) *(planned)* |
 | CI | GitHub Actions — type-check + lint on every PR |
 
@@ -64,10 +65,12 @@ instagram-bot-detector/
 │       ├── index.ts        # Express app + routes
 │       ├── types.ts        # Follower interface + shared types
 │       ├── scorer.ts       # Scoring function
-│       └── mockData.ts     # Mock followers (until real scraping exists)
+│       ├── mockData.ts     # Mock followers (until real scraping exists)
+│       ├── db.ts           # Sequelize connection
+│       └── models/
+│           └── KnownBot.ts # known_bots table model
 └── scripts/
-    ├── get_followers.sh    # Fetches followers via Instagram mobile API
-    └── detect_bots.py      # Scores followers for bot likelihood
+    └── get_followers.sh    # Fetches followers via Instagram mobile API
 ```
 
 ---
@@ -77,6 +80,7 @@ instagram-bot-detector/
 ### Prerequisites
 
 - Node.js 24+
+- PostgreSQL 16 (`brew install postgresql@16 && brew services start postgresql@16`)
 - Python 3.10+ *(for scripts, not required to run the app)*
 
 ### Install
@@ -99,9 +103,26 @@ cd backend && npx ts-node src/index.ts
 cd frontend && npm run dev
 ```
 
+### Database Setup
+
+```bash
+createdb instagram_bot_detector
+```
+
+The `known_bots` table is created automatically when the backend starts.
+
 ### Environment
 
-Create a `.env` file in the project root (required for real Instagram scraping only):
+Create `backend/.env` (required to run the backend):
+
+```
+DB_NAME=instagram_bot_detector
+DB_USER=postgres
+DB_HOST=localhost
+DB_PORT=5432
+```
+
+For real Instagram scraping, also create a `.env` in the project root:
 
 ```
 SESSION_ID=your_instagram_session_id_here
@@ -166,6 +187,6 @@ Score is capped at 100. Full design in `notes/BOT_SCORING.md`.
 GitHub Actions runs on every PR that touches `frontend/` or `backend/`:
 
 - **Frontend:** TypeScript type-check + ESLint
-- **Backend:** TypeScript type-check
+- **Backend:** TypeScript type-check + ESLint
 
 PRs must pass CI before merge. Branch protection rules enforce this.
