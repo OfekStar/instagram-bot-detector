@@ -3,6 +3,7 @@ import cors from 'cors';
 import { mockFollowers } from './mockData';
 import { scoreAccount } from './scorer';
 import { Follower } from './types';
+import { sequelize } from './db';
 
 const app = express();
 const PORT = 3001;
@@ -32,6 +33,12 @@ app.post('/api/analyze', (req, res) => {
   res.json(sorted);
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+sequelize.sync({ force: false }).then(() => {
+  console.log('Database connected and tables ready');
+  app.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+  });
+}).catch((err: Error) => {
+  console.error('Failed to connect to database:', err.message);
+  process.exit(1);
 });
