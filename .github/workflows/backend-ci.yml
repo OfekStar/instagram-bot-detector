@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    name: Type-check
+    name: Type-check & lint
     runs-on: ubuntu-latest
 
     steps:
@@ -32,3 +32,7 @@ jobs:
       - name: Type-check (tsc)
         working-directory: backend
         run: npx tsc --noEmit
+
+      - name: Lint (eslint)
+        working-directory: backend
+        run: npm run lint
