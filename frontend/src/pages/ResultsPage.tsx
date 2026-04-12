@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useSearchParams, useNavigate } from "react-router-dom";
+import axios from "axios";
 import gradeA from "../assets/grades/A.webp";
 import gradeB from "../assets/grades/B.webp";
 import gradeC from "../assets/grades/C.webp";
@@ -77,184 +78,6 @@ function fmt(n: number): string {
   return String(n);
 }
 
-const MOCK_FOLLOWERS: Follower[] = [
-  {
-    id: "1", username: "xX_follow4follow_Xx", displayName: "Follow4Follow",
-    botScore: 97, isKnownBot: true,
-    followerCount: 12, followingCount: 8400, postCount: 0, createdAt: "Mar 2024",
-    flaggedFields: ["followers", "following", "posts", "age"],
-    reasons: [
-      { text: "Known bot account", severity: "high" },
-      { text: "Spam keyword in username", severity: "high" },
-    ],
-  },
-  {
-    id: "2", username: "free.insta.likes99", displayName: "Free Likes ✨",
-    botScore: 94, isKnownBot: true,
-    followerCount: 8, followingCount: 6200, postCount: 0, createdAt: "Jan 2024",
-    flaggedFields: ["followers", "following", "posts"],
-    reasons: [
-      { text: "Known bot account", severity: "high" },
-      { text: "Spam keyword in username", severity: "high" },
-    ],
-  },
-  {
-    id: "3", username: "buy_ig_followers1", displayName: "IG Growth",
-    botScore: 91, isKnownBot: false,
-    followerCount: 3, followingCount: 12000, postCount: 0, createdAt: "Nov 2023",
-    flaggedFields: ["followers", "following", "posts"],
-    reasons: [
-      { text: "Spam keyword in username", severity: "high" },
-    ],
-  },
-  {
-    id: "4", username: "promo_boost_22", displayName: "Promo Boost",
-    botScore: 88, isKnownBot: true,
-    followerCount: 41, followingCount: 4800, postCount: 2, createdAt: "Feb 2024",
-    flaggedFields: ["following", "age"],
-    reasons: [
-      { text: "Known bot account", severity: "high" },
-      { text: "Promo keyword in username", severity: "high" },
-    ],
-  },
-  {
-    id: "5", username: "spam_acc_4421", displayName: "",
-    botScore: 85, isKnownBot: false,
-    followerCount: 0, followingCount: 3100, postCount: 0, createdAt: "Mar 2026",
-    flaggedFields: ["followers", "following", "posts", "age"],
-    reasons: [
-      { text: "Spam keyword in username", severity: "high" },
-    ],
-  },
-  {
-    id: "6", username: "auto_liker_bot", displayName: "Auto Liker",
-    botScore: 82, isKnownBot: true,
-    followerCount: 22, followingCount: 9100, postCount: 0, createdAt: "Aug 2023",
-    flaggedFields: ["followers", "following", "posts"],
-    reasons: [
-      { text: "Known bot account", severity: "high" },
-      { text: "Bot keyword in username", severity: "high" },
-    ],
-  },
-  {
-    id: "7", username: "brand_deals_offer", displayName: "Brand Deals 💰",
-    botScore: 79, isKnownBot: false,
-    followerCount: 18, followingCount: 5200, postCount: 4, createdAt: "Jun 2023",
-    flaggedFields: ["followers", "following"],
-    reasons: [
-      { text: "Promo keyword in username", severity: "high" },
-      { text: "Suspicious bio link", severity: "medium" },
-    ],
-  },
-  {
-    id: "8", username: "ghost_user_2291", displayName: "",
-    botScore: 76, isKnownBot: false,
-    followerCount: 1, followingCount: 2700, postCount: 0, createdAt: "Feb 2026",
-    flaggedFields: ["followers", "following", "posts", "age"],
-    reasons: [],
-  },
-  {
-    id: "9", username: "influx_media_co", displayName: "Influx Media",
-    botScore: 68, isKnownBot: false,
-    followerCount: 44, followingCount: 3100, postCount: 0, createdAt: "Sep 2023",
-    flaggedFields: ["following", "posts"],
-    reasons: [
-      { text: "Generic bio", severity: "low" },
-    ],
-  },
-  {
-    id: "10", username: "social_bxst", displayName: "Social Boost",
-    botScore: 63, isKnownBot: true,
-    followerCount: 310, followingCount: 4400, postCount: 7, createdAt: "Apr 2022",
-    flaggedFields: ["following"],
-    reasons: [
-      { text: "Known bot account", severity: "high" },
-      { text: "Boost keyword in username", severity: "high" },
-    ],
-  },
-  {
-    id: "11", username: "trendy.clips.daily", displayName: "Trendy Clips",
-    botScore: 57, isKnownBot: false,
-    followerCount: 91, followingCount: 2800, postCount: 312, createdAt: "Jul 2022",
-    flaggedFields: ["following"],
-    reasons: [
-      { text: "High post frequency", severity: "medium" },
-    ],
-  },
-  {
-    id: "12", username: "viralpage_hq", displayName: "Viral Page HQ",
-    botScore: 51, isKnownBot: false,
-    followerCount: 120, followingCount: 1900, postCount: 14, createdAt: "Jan 2022",
-    flaggedFields: ["following"],
-    reasons: [
-      { text: "No bio", severity: "low" },
-    ],
-  },
-  {
-    id: "13", username: "mia.thompson92", displayName: "Mia Thompson",
-    botScore: 44, isKnownBot: false,
-    followerCount: 210, followingCount: 900, postCount: 23, createdAt: "Jan 2026",
-    flaggedFields: ["age"],
-    reasons: [],
-  },
-  {
-    id: "14", username: "new_user_39182", displayName: "",
-    botScore: 38, isKnownBot: false,
-    followerCount: 5, followingCount: 440, postCount: 1, createdAt: "Feb 2026",
-    flaggedFields: ["followers", "age"],
-    reasons: [
-      { text: "Numeric suffix in username", severity: "medium" },
-    ],
-  },
-  {
-    id: "15", username: "photography_hub", displayName: "Photography Hub",
-    botScore: 29, isKnownBot: false,
-    followerCount: 480, followingCount: 600, postCount: 88, createdAt: "Mar 2020",
-    flaggedFields: [],
-    reasons: [
-      { text: "Following/follower ratio", severity: "low" },
-    ],
-  },
-  {
-    id: "16", username: "carlos_dev", displayName: "Carlos Dev",
-    botScore: 21, isKnownBot: false,
-    followerCount: 820, followingCount: 310, postCount: 45, createdAt: "Nov 2019",
-    flaggedFields: [],
-    reasons: [
-      { text: "Low engagement rate", severity: "low" },
-    ],
-  },
-  {
-    id: "17", username: "linaaa.k", displayName: "Lina K.",
-    botScore: 14, isKnownBot: false,
-    followerCount: 1200, followingCount: 430, postCount: 18, createdAt: "May 2021",
-    flaggedFields: [],
-    reasons: [
-      { text: "Few posts", severity: "low" },
-    ],
-  },
-  {
-    id: "18", username: "james.b.photo", displayName: "James B.",
-    botScore: 6, isKnownBot: false,
-    followerCount: 3400, followingCount: 280, postCount: 142, createdAt: "Aug 2018",
-    flaggedFields: [],
-    reasons: [],
-  },
-  {
-    id: "19", username: "sara_designs", displayName: "Sara Designs",
-    botScore: 4, isKnownBot: false,
-    followerCount: 5100, followingCount: 310, postCount: 97, createdAt: "Mar 2019",
-    flaggedFields: [],
-    reasons: [],
-  },
-  {
-    id: "20", username: "ofek_real", displayName: "Ofek",
-    botScore: 1, isKnownBot: false,
-    followerCount: 8200, followingCount: 420, postCount: 204, createdAt: "Jun 2017",
-    flaggedFields: [],
-    reasons: [],
-  },
-];
 
 const RISK_STYLES: Record<RiskLevel, { row: string; border: string; score: string }> = {
   high:   { row: "bg-red-950/20",    border: "border-l-red-500",    score: "text-red-400" },
@@ -585,13 +408,22 @@ export default function ResultsPage() {
   const navigate = useNavigate();
   const profile = searchParams.get("profile") ?? "";
   const [loading, setLoading] = useState(true);
+  const [followers, setFollowers] = useState<Follower[]>([]);
+  const [apiError, setApiError] = useState("");
   const [filter, setFilter] = useState<FilterType>("all");
   const [barMounted, setBarMounted] = useState(false);
 
   useEffect(() => {
-    const t = setTimeout(() => setLoading(false), 4000);
-    return () => clearTimeout(t);
-  }, []);
+    axios.post<Follower[]>("http://localhost:3001/api/analyze", { username: profile })
+      .then((res) => {
+        setFollowers(res.data);
+        setLoading(false);
+      })
+      .catch(() => {
+        setApiError("Failed to analyze profile. Make sure the backend is running.");
+        setLoading(false);
+      });
+  }, [profile]);
 
   useEffect(() => {
     if (!loading) {
@@ -602,7 +434,16 @@ export default function ResultsPage() {
 
   if (loading) return <LoadingView profile={profile} />;
 
-  const sorted = [...MOCK_FOLLOWERS].sort((a, b) => b.botScore - a.botScore);
+  if (apiError) return (
+    <div className="min-h-screen flex flex-col items-center justify-center px-4">
+      <div className="w-full max-w-sm flex flex-col gap-4">
+        <p className="text-red-400 text-sm">{apiError}</p>
+        <button onClick={() => navigate("/")} className="text-zinc-500 hover:text-zinc-300 text-xs transition-colors w-fit">← Back</button>
+      </div>
+    </div>
+  );
+
+  const sorted = [...followers].sort((a, b) => b.botScore - a.botScore);
   const filtered = filter === "all" ? sorted : sorted.filter((f) => getRiskLevel(f.botScore) === filter);
   const counts = {
     all: sorted.length,
