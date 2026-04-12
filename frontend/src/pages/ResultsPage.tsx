@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useSearchParams, useNavigate } from "react-router-dom";
+import axios from "axios";
 import gradeA from "../assets/grades/A.webp";
 import gradeB from "../assets/grades/B.webp";
 import gradeC from "../assets/grades/C.webp";
@@ -585,13 +586,22 @@ export default function ResultsPage() {
   const navigate = useNavigate();
   const profile = searchParams.get("profile") ?? "";
   const [loading, setLoading] = useState(true);
+  const [followers, setFollowers] = useState<Follower[]>([]);
+  const [apiError, setApiError] = useState("");
   const [filter, setFilter] = useState<FilterType>("all");
   const [barMounted, setBarMounted] = useState(false);
 
   useEffect(() => {
-    const t = setTimeout(() => setLoading(false), 4000);
-    return () => clearTimeout(t);
-  }, []);
+    axios.post<Follower[]>("http://localhost:3001/api/analyze", { username: profile })
+      .then((res) => {
+        setFollowers(res.data);
+        setLoading(false);
+      })
+      .catch(() => {
+        setApiError("Failed to analyze profile. Make sure the backend is running.");
+        setLoading(false);
+      });
+  }, [profile]);
 
   useEffect(() => {
     if (!loading) {
@@ -602,7 +612,16 @@ export default function ResultsPage() {
 
   if (loading) return <LoadingView profile={profile} />;
 
-  const sorted = [...MOCK_FOLLOWERS].sort((a, b) => b.botScore - a.botScore);
+  if (apiError) return (
+    <div className="min-h-screen flex flex-col items-center justify-center px-4">
+      <div className="w-full max-w-sm flex flex-col gap-4">
+        <p className="text-red-400 text-sm">{apiError}</p>
+        <button onClick={() => navigate("/")} className="text-zinc-500 hover:text-zinc-300 text-xs transition-colors w-fit">← Back</button>
+      </div>
+    </div>
+  );
+
+  const sorted = [...followers].sort((a, b) => b.botScore - a.botScore);
   const filtered = filter === "all" ? sorted : sorted.filter((f) => getRiskLevel(f.botScore) === filter);
   const counts = {
     all: sorted.length,
