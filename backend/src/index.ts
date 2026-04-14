@@ -1,6 +1,6 @@
+import { spawn } from 'child_process';
 import express from 'express';
 import cors from 'cors';
-import { mockFollowers } from './mockData';
 import { scoreAccount } from './scorer';
 import { Follower } from './types';
 import { sequelize } from './db';
@@ -25,8 +25,33 @@ app.post('/api/analyze', async (req, res) => {
     return;
   }
 
+  const scraperPath = require('path').join(__dirname, '../../scripts/get_followers.py');
+
+  const followers: Follower[] = await new Promise((resolve, reject) => {
+    const proc = spawn('python3', [scraperPath, username]);
+    let stdout = '';
+    let stderr = '';
+
+    proc.stdout.on('data', (chunk: Buffer) => { stdout += chunk.toString(); });
+    proc.stderr.on('data', (chunk: Buffer) => { stderr += chunk.toString(); });
+
+    proc.on('close', (code: number) => {
+      if (code !== 0) {
+        reject(new Error(`Scraper exited with code ${code}: ${stderr}`));
+        return;
+      }
+      try {
+        resolve(JSON.parse(stdout) as Follower[]);
+      } catch {
+        reject(new Error(`Failed to parse scraper output: ${stdout.slice(0, 200)}`));
+      }
+    });
+
+    proc.on('error', reject);
+  });
+
   const results: Follower[] = await Promise.all(
-    mockFollowers.map(async (follower) => {
+    followers.map(async (follower) => {
       const cached = await KnownBot.findOne({ where: { id: follower.id } });
       const isStale = !cached || (Date.now() - cached.lastSeenAt.getTime() > CACHE_TTL_MS);
 
