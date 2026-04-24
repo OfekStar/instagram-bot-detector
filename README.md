@@ -1,5 +1,7 @@
 # Instagram Bot Detector
 
+_Last updated: 2026-04-25_
+
 Paste a public Instagram profile URL — the app fetches its followers, scores each account for bot likelihood, and returns a ranked results list with explanations.
 
 ---
@@ -11,8 +13,11 @@ Paste a public Instagram profile URL — the app fetches its followers, scores e
 | Frontend UI | ✅ Complete — profile input, results list, filters, score breakdown |
 | Express backend | ✅ Complete — POST /api/analyze with scoring engine |
 | Database | ✅ Complete — PostgreSQL + sequelize-typescript, known_bots cache |
-| Frontend ↔ Backend | ⬜ Not started (Lesson 07) |
-| Real Instagram scraping | ⬜ Not started (Lesson 08+) |
+| Frontend ↔ Backend | ✅ Complete — real API calls, no mock data |
+| Real Instagram scraping | ✅ Complete — Python scraper via session cookie |
+| Unit tests | ✅ Complete — Vitest, scorer.ts covered |
+| E2E tests | ⬜ Not started |
+| Deploy | ⬜ Not started |
 
 ---
 
@@ -25,7 +30,7 @@ Paste a public Instagram profile URL — the app fetches its followers, scores e
 5. Results are returned sorted high → low, with flagged fields and human-readable reasons
 6. Frontend displays color-coded rows with expandable score breakdowns
 
-> **Right now:** the backend uses mock followers. Real Instagram scraping is a future milestone.
+> **Right now:** real Instagram followers are fetched via a Python scraper using a session cookie. Results are cached in PostgreSQL.
 
 ---
 
@@ -36,8 +41,18 @@ Paste a public Instagram profile URL — the app fetches its followers, scores e
 | Frontend | React 19 + TypeScript, Vite 8, Tailwind CSS v4, React Router v7 |
 | Backend | Express 5 + TypeScript, ts-node, Node.js 24 |
 | Database | PostgreSQL 16 + sequelize-typescript |
-| Scripts | Python 3 (scoring) + Bash (Instagram fetch) *(planned)* |
+| Scripts | Python 3 (Instagram fetch via session cookie) |
 | CI | GitHub Actions — type-check + lint on every PR |
+
+---
+
+## Architecture
+
+**Separation of concerns:** `scorer.ts` is a pure function — it takes a `Follower` object and returns a score. It never touches the database. `index.ts` owns fetching: it gets followers (from DB cache or the Python scraper), then passes each one to `scoreAccount()`. This makes the scoring logic easy to test in isolation without a running database.
+
+```
+Python scraper → index.ts (fetch + cache) → scoreAccount() → response
+```
 
 ---
 
